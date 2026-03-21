@@ -36,10 +36,15 @@ export default function PostsPage() {
   if (loading) return <LoadingPage />;
 
   if (error) {
+    // Likely empty collection — show empty state instead of error
     return (
-      <div className="p-8 text-center">
-        <p className="text-red-400">Failed to load posts: {error}</p>
-      </div>
+      <>
+        <PageHeader title="Posts" subtitle="Track XHS posts about Byondwalls" />
+        <EmptyState
+          title="No posts tracked yet"
+          description="This page tracks XHS posts about Byondwalls. Posts will appear here as KOCs start reviewing Byondwalls and you import their posts."
+        />
+      </>
     );
   }
 
