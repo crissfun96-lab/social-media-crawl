@@ -1,6 +1,7 @@
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { creatorUpdateSchema } from '@/lib/validation';
+import type { Creator } from '@/types/database';
 
 export async function GET(
   _request: Request,
@@ -8,19 +9,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const doc = await db().collection('creators').doc(id).get();
 
-    const { data, error } = await supabase
-      .from('creators')
-      .select('*')
-      .eq('id', id)
-      .single();
+    if (!doc.exists) return errorResponse('Creator not found', 404);
 
-    if (error) {
-      if (error.code === 'PGRST116') return errorResponse('Creator not found', 404);
-      return errorResponse(error.message, 500);
-    }
-
-    return successResponse(data);
+    return successResponse({ id: doc.id, ...doc.data() } as Creator);
   } catch (err) {
     return errorResponse(err instanceof Error ? err.message : 'Internal server error', 500);
   }
@@ -39,19 +32,16 @@ export async function PUT(
       return errorResponse('Validation failed', 400, parsed.error.issues);
     }
 
-    const { data, error } = await supabase
-      .from('creators')
-      .update(parsed.data)
-      .eq('id', id)
-      .select()
-      .single();
+    const docRef = db().collection('creators').doc(id);
+    const doc = await docRef.get();
 
-    if (error) {
-      if (error.code === 'PGRST116') return errorResponse('Creator not found', 404);
-      return errorResponse(error.message, 500);
-    }
+    if (!doc.exists) return errorResponse('Creator not found', 404);
 
-    return successResponse(data);
+    const updates = { ...parsed.data, updated_at: new Date().toISOString() };
+    await docRef.update(updates);
+
+    const updated = await docRef.get();
+    return successResponse({ id: updated.id, ...updated.data() } as Creator);
   } catch (err) {
     return errorResponse(err instanceof Error ? err.message : 'Internal server error', 500);
   }
@@ -63,13 +53,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const docRef = db().collection('creators').doc(id);
+    const doc = await docRef.get();
 
-    const { error } = await supabase
-      .from('creators')
-      .delete()
-      .eq('id', id);
+    if (!doc.exists) return errorResponse('Creator not found', 404);
 
-    if (error) return errorResponse(error.message, 500);
+    await docRef.delete();
 
     return successResponse({ deleted: true });
   } catch (err) {

@@ -14,7 +14,7 @@ import { LoadingPage } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useDebounce } from '@/lib/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import type { Creator } from '@/types/database';
+import type { Creator, OutreachStatus } from '@/types/database';
 
 export default function CreatorsPage() {
   const [search, setSearch] = useState('');
@@ -74,6 +74,15 @@ export default function CreatorsPage() {
     setSelectedIds(new Set());
     creatorsRefetch();
   }, [selectedIds, creatorsRefetch]);
+
+  const handleSingleStatusChange = useCallback(async (id: string, status: OutreachStatus) => {
+    await fetch(`/api/creators/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outreach_status: status }),
+    });
+    creatorsRefetch();
+  }, [creatorsRefetch]);
 
   const handleBulkAddTags = useCallback(async (tags: string[]) => {
     if (!creators) return;
@@ -213,6 +222,7 @@ export default function CreatorsPage() {
             onToggleSelect={handleToggleSelect}
             onToggleSelectAll={handleToggleSelectAll}
             allSelected={creators.items.length > 0 && selectedIds.size === creators.items.length}
+            onStatusChange={handleSingleStatusChange}
           />
           <Pagination
             page={creators.page}

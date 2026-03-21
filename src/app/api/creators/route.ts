@@ -1,8 +1,9 @@
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
 import { successResponse, errorResponse, parseSearchParams } from '@/lib/api-response';
 import { creatorSchema } from '@/lib/validation';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import type { Creator } from '@/types/database';
+import { v4 as uuid } from 'uuid';
 
 export async function GET(request: Request) {
   try {
@@ -11,41 +12,62 @@ export async function GET(request: Request) {
     const perPage = Math.min(100, Math.max(1, parseInt(params.get('per_page') ?? String(DEFAULT_PAGE_SIZE), 10)));
     const offset = (page - 1) * perPage;
 
-    let query = supabase.from('creators').select('*', { count: 'exact' });
+    let query: FirebaseFirestore.Query = db().collection('creators');
 
     const platform = params.get('platform');
-    if (platform) query = query.eq('platform', platform);
-
-    const location = params.get('location');
-    if (location) query = query.ilike('location', `%${location}%`);
+    if (platform) query = query.where('platform', '==', platform);
 
     const outreachStatus = params.get('outreach_status');
-    if (outreachStatus) query = query.eq('outreach_status', outreachStatus);
+    if (outreachStatus) query = query.where('outreach_status', '==', outreachStatus);
 
     const hasPosted = params.get('has_posted_about_us');
-    if (hasPosted !== null && hasPosted !== '') query = query.eq('has_posted_about_us', hasPosted === 'true');
+    if (hasPosted !== null && hasPosted !== '') {
+      query = query.where('has_posted_about_us', '==', hasPosted === 'true');
+    }
 
-    const followerMin = params.get('follower_min');
-    if (followerMin) query = query.gte('follower_count', parseInt(followerMin, 10));
+    const snapshot = await query.get();
+    let results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Creator);
 
-    const followerMax = params.get('follower_max');
-    if (followerMax) query = query.lte('follower_count', parseInt(followerMax, 10));
+    const location = params.get('location');
+    if (location) {
+      const loc = location.toLowerCase();
+      results = results.filter(r => r.location?.toLowerCase().includes(loc));
+    }
 
     const search = params.get('search');
-    if (search) query = query.or(`name.ilike.%${search}%,username.ilike.%${search}%`);
+    if (search) {
+      const s = search.toLowerCase();
+      results = results.filter(r =>
+        r.name.toLowerCase().includes(s) || r.username.toLowerCase().includes(s)
+      );
+    }
 
-    const sortBy = params.get('sort_by') ?? 'created_at';
-    const sortOrder = params.get('sort_order') === 'asc';
-    query = query.order(sortBy, { ascending: sortOrder });
+    const followerMin = params.get('follower_min');
+    if (followerMin) {
+      const min = parseInt(followerMin, 10);
+      results = results.filter(r => (r.follower_count ?? 0) >= min);
+    }
 
-    query = query.range(offset, offset + perPage - 1);
+    const followerMax = params.get('follower_max');
+    if (followerMax) {
+      const max = parseInt(followerMax, 10);
+      results = results.filter(r => (r.follower_count ?? 0) <= max);
+    }
 
-    const { data, error, count } = await query;
+    const sortBy = (params.get('sort_by') ?? 'created_at') as keyof Creator;
+    const ascending = params.get('sort_order') === 'asc';
+    results = [...results].sort((a, b) => {
+      const aVal = a[sortBy] ?? '';
+      const bVal = b[sortBy] ?? '';
+      const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return ascending ? cmp : -cmp;
+    });
 
-    if (error) return errorResponse(error.message, 500);
+    const total = results.length;
+    const pageResults = results.slice(offset, offset + perPage);
 
-    return successResponse<readonly Creator[]>(data ?? [], {
-      total: count ?? 0,
+    return successResponse<readonly Creator[]>(pageResults, {
+      total,
       page,
       per_page: perPage,
     });
@@ -63,15 +85,29 @@ export async function POST(request: Request) {
       return errorResponse('Validation failed', 400, parsed.error.issues);
     }
 
-    const { data, error } = await supabase
-      .from('creators')
-      .insert(parsed.data)
-      .select()
-      .single();
+    const id = uuid();
+    const now = new Date().toISOString();
+    const creator: Creator = {
+      id,
+      ...parsed.data,
+      follower_count: parsed.data.follower_count ?? null,
+      following_count: parsed.data.following_count ?? null,
+      post_count: parsed.data.post_count ?? null,
+      bio: parsed.data.bio ?? null,
+      location: parsed.data.location ?? null,
+      content_type: parsed.data.content_type ?? null,
+      has_posted_about_us: parsed.data.has_posted_about_us ?? false,
+      outreach_status: parsed.data.outreach_status ?? 'not_contacted',
+      outreach_notes: parsed.data.outreach_notes ?? null,
+      contact_info: parsed.data.contact_info ?? null,
+      tags: parsed.data.tags ?? [],
+      created_at: now,
+      updated_at: now,
+    };
 
-    if (error) return errorResponse(error.message, 500);
+    await db().collection('creators').doc(id).set(creator);
 
-    return successResponse(data, undefined, 201);
+    return successResponse(creator, undefined, 201);
   } catch (err) {
     return errorResponse(err instanceof Error ? err.message : 'Internal server error', 500);
   }

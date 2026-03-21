@@ -1,6 +1,7 @@
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { bulkPostsSchema } from '@/lib/validation';
+import { v4 as uuid } from 'uuid';
 
 export async function POST(request: Request) {
   try {
@@ -17,16 +18,37 @@ export async function POST(request: Request) {
     const errors: Array<{ index: number; error: string }> = [];
 
     for (let i = 0; i < posts.length; i += BATCH_SIZE) {
-      const batch = posts.slice(i, i + BATCH_SIZE);
-      const { data, error } = await supabase
-        .from('posts')
-        .insert(batch)
-        .select();
+      const chunk = posts.slice(i, i + BATCH_SIZE);
 
-      if (error) {
-        errors.push({ index: i, error: error.message });
-      } else {
-        imported += data?.length ?? 0;
+      try {
+        const batch = db().batch();
+        const now = new Date().toISOString();
+
+        for (const post of chunk) {
+          const id = uuid();
+          const docRef = db().collection('posts').doc(id);
+          batch.set(docRef, {
+            id,
+            ...post,
+            title: post.title ?? null,
+            content: post.content ?? null,
+            likes: post.likes ?? 0,
+            comments: post.comments ?? 0,
+            saves: post.saves ?? 0,
+            views: post.views ?? 0,
+            is_about_byondwalls: post.is_about_byondwalls ?? false,
+            post_date: post.post_date ?? null,
+            hashtags: post.hashtags ?? [],
+            keywords: post.keywords ?? [],
+            thumbnail_url: post.thumbnail_url ?? null,
+            created_at: now,
+          });
+        }
+
+        await batch.commit();
+        imported += chunk.length;
+      } catch (err) {
+        errors.push({ index: i, error: err instanceof Error ? err.message : 'Batch write failed' });
       }
     }
 

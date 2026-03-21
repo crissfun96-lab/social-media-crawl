@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useCallback } from 'react';
+import { logoutAction } from '@/app/actions/auth';
 
 interface NavItem {
   readonly href: string;
@@ -57,11 +59,99 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
 ];
 
+function LogoutButton() {
+  return (
+    <form action={logoutAction}>
+      <button
+        type="submit"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full
+          text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+          min-h-[44px]"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+        Sign out
+      </button>
+    </form>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   return (
     <>
+      {/* Mobile top header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-950 border-b border-zinc-800 px-4 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+            SC
+          </div>
+          <span className="text-base font-semibold text-zinc-100">Social Crawl</span>
+        </div>
+        <button
+          onClick={() => setMobileOpen(v => !v)}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors rounded-lg hover:bg-zinc-800"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          )}
+        </button>
+      </header>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={closeMobile}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={`md:hidden fixed top-14 left-0 bottom-0 z-50 w-64 bg-zinc-950 border-r border-zinc-800
+          transform transition-transform duration-200 ease-in-out
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <nav className="flex flex-col h-full px-3 py-4">
+          <div className="flex-1 space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMobile}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px]
+                    ${isActive
+                      ? 'bg-indigo-600/10 text-indigo-400'
+                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                    }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+          <div className="border-t border-zinc-800 pt-3">
+            <LogoutButton />
+          </div>
+        </nav>
+      </div>
+
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-zinc-950 border-r border-zinc-800">
         <div className="flex flex-col flex-1 overflow-y-auto">
@@ -90,11 +180,14 @@ export function Sidebar() {
               );
             })}
           </nav>
+          <div className="px-3 pb-4 border-t border-zinc-800 pt-3">
+            <LogoutButton />
+          </div>
         </div>
       </aside>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-zinc-950 border-t border-zinc-800 px-2 pb-safe">
+      {/* Mobile bottom nav — hidden now that we have drawer */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-zinc-950 border-t border-zinc-800 px-2 pb-safe">
         <div className="flex items-center justify-around py-2">
           {NAV_ITEMS.map((item) => {
             const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
@@ -102,7 +195,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs min-h-[44px] justify-center
                   ${isActive ? 'text-indigo-400' : 'text-zinc-500'}`}
               >
                 {item.icon}
