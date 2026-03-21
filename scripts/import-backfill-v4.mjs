@@ -85,7 +85,8 @@ async function main() {
       follower_count: followerCount,
       following_count: followingNum,
       post_count: backfill.note_count ?? 0,
-      likes_count: likesSavesNum,
+      // likes_count is viral post likes (from outreach_notes) — do NOT overwrite
+      profile_likes_saves: likesSavesNum,
       likes_and_saves: backfill.likes_and_saves ?? '',
       profile_url: backfill.profile_url ?? data.profile_url,
       platform_id: backfill.user_id ?? data.platform_id,

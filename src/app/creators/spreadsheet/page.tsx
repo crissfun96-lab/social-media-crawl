@@ -13,7 +13,7 @@ const PAGE_SIZE = 50;
 export default function SpreadsheetPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
-  const [sortBy, setSortBy] = useState('likes_count');
+  const [sortBy, setSortBy] = useState('profile_likes_saves');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const queryParams = new URLSearchParams();
@@ -90,7 +90,8 @@ export default function SpreadsheetPage() {
               <SortTh label="Creator" field="name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
               <th className="py-2 px-2 text-left font-medium text-zinc-400">XHS Link</th>
               <SortTh label="Followers" field="follower_count" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
-              <SortTh label="Likes" field="likes_count" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
+              <SortTh label="Post Likes" field="likes_count" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
+              <SortTh label="Profile L+S" field="profile_likes_saves" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
               <th className="py-2 px-2 text-left font-medium text-zinc-400">Location</th>
               <th className="py-2 px-2 text-left font-medium text-zinc-400">Tags</th>
               <th className="py-2 px-2 text-left font-medium text-zinc-400 min-w-[140px]">Status</th>
@@ -99,7 +100,9 @@ export default function SpreadsheetPage() {
           </thead>
           <tbody className="divide-y divide-zinc-800/50">
             {data?.items.map((creator, i) => {
-              const likesCount = (creator as Creator & { likes_count?: number }).likes_count;
+              const ext = creator as Creator & { likes_count?: number; profile_likes_saves?: number };
+              const postLikes = ext.likes_count;
+              const profileLS = ext.profile_likes_saves;
               return (
                 <tr key={creator.id} className="hover:bg-zinc-800/40 transition-colors">
                   <td className="py-1.5 px-2 text-center text-zinc-600">{(page - 1) * PAGE_SIZE + i + 1}</td>
@@ -134,7 +137,10 @@ export default function SpreadsheetPage() {
                     {formatNumber(creator.follower_count)}
                   </td>
                   <td className="py-1.5 px-2 text-right text-zinc-300 font-mono">
-                    {likesCount != null ? formatNumber(likesCount) : '—'}
+                    {postLikes != null && postLikes > 0 ? formatNumber(postLikes) : '—'}
+                  </td>
+                  <td className="py-1.5 px-2 text-right text-zinc-300 font-mono">
+                    {profileLS != null && profileLS > 0 ? formatNumber(profileLS) : '—'}
                   </td>
                   <td className="py-1.5 px-2 text-zinc-400 max-w-[120px] truncate">
                     {creator.location ?? '—'}

@@ -7,7 +7,7 @@ import { StatusSelect } from './status-select';
 import { CreatorCardList } from './creator-card';
 import type { Creator, OutreachStatus } from '@/types/database';
 
-export type SortField = 'name' | 'follower_count' | 'outreach_status' | 'location' | 'likes_count' | 'created_at';
+export type SortField = 'name' | 'follower_count' | 'outreach_status' | 'location' | 'likes_count' | 'profile_likes_saves' | 'created_at';
 export type SortOrder = 'asc' | 'desc';
 
 interface SortHeaderProps {
@@ -73,7 +73,8 @@ export function CreatorTable({
             <option value="created_at">Newest</option>
             <option value="name">Name</option>
             <option value="follower_count">Followers</option>
-            <option value="likes_count">Likes</option>
+            <option value="likes_count">Post Likes</option>
+            <option value="profile_likes_saves">Profile L+S</option>
             <option value="outreach_status">Status</option>
             <option value="location">Location</option>
           </select>
@@ -103,7 +104,8 @@ export function CreatorTable({
               <SortHeader label="Creator" field="name" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
               <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden sm:table-cell">Platform</th>
               <SortHeader label="Followers" field="follower_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
-              <SortHeader label="Likes" field="likes_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
+              <SortHeader label="Post Likes" field="likes_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
+              <SortHeader label="Profile L+S" field="profile_likes_saves" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden lg:table-cell" />
               <SortHeader label="Location" field="location" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="hidden lg:table-cell" />
               <SortHeader label="Status" field="outreach_status" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
               <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Tags</th>
@@ -111,7 +113,9 @@ export function CreatorTable({
           </thead>
           <tbody>
             {creators.map((creator) => {
-              const likesCount = (creator as Creator & { readonly likes_count?: number }).likes_count;
+              const ext = creator as Creator & { readonly likes_count?: number; readonly profile_likes_saves?: number };
+              const likesCount = ext.likes_count;
+              const profileLS = ext.profile_likes_saves;
               return (
                 <tr key={creator.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
                   <td className="py-3 px-2">
@@ -180,7 +184,10 @@ export function CreatorTable({
                     {formatNumber(creator.follower_count)}
                   </td>
                   <td className="py-3 px-2 text-right text-zinc-300 hidden md:table-cell">
-                    {likesCount != null ? formatNumber(likesCount) : '-'}
+                    {likesCount != null && likesCount > 0 ? formatNumber(likesCount) : '-'}
+                  </td>
+                  <td className="py-3 px-2 text-right text-zinc-300 hidden lg:table-cell">
+                    {profileLS != null && profileLS > 0 ? formatNumber(profileLS) : '-'}
                   </td>
                   <td className="py-3 px-2 text-zinc-400 hidden lg:table-cell">
                     {creator.location ?? '-'}

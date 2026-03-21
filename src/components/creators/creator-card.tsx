@@ -13,7 +13,9 @@ interface CreatorCardProps {
 
 export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
   const xhsPostUrl = creator.profile_url;
-  const likesCount = (creator as Creator & { readonly likes_count?: number }).likes_count;
+  const ext = creator as Creator & { readonly likes_count?: number; readonly profile_likes_saves?: number };
+  const postLikes = ext.likes_count;
+  const profileLS = ext.profile_likes_saves;
   const tier = getCreatorTier(creator.follower_count);
 
   return (
@@ -44,12 +46,20 @@ export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
             <span className="font-medium text-zinc-300">{formatNumber(creator.follower_count)}</span>
           </div>
         )}
-        {likesCount != null && likesCount > 0 && (
-          <div className="flex items-center gap-1 text-zinc-400">
+        {postLikes != null && postLikes > 0 && (
+          <div className="flex items-center gap-1 text-zinc-400" title="Viral post likes">
             <svg className="h-4 w-4 text-red-500/70" fill="currentColor" viewBox="0 0 24 24">
               <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
             </svg>
-            <span className="font-medium text-zinc-300">{formatNumber(likesCount)}</span>
+            <span className="font-medium text-zinc-300">{formatNumber(postLikes)}</span>
+          </div>
+        )}
+        {profileLS != null && profileLS > 0 && (
+          <div className="flex items-center gap-1 text-zinc-400" title="Profile likes + saves">
+            <svg className="h-4 w-4 text-amber-500/70" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+            </svg>
+            <span className="font-medium text-zinc-300">{formatNumber(profileLS)}</span>
           </div>
         )}
         {creator.location && (
