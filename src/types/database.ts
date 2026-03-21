@@ -92,6 +92,14 @@ export interface DashboardStats {
   readonly recentPosts: readonly PostWithCreator[];
   readonly totalPosts: number;
   readonly postsAboutUs: number;
+  readonly tierBreakdown?: ReadonlyArray<{ readonly tier: string; readonly count: number }>;
+  readonly topCreators?: ReadonlyArray<{
+    readonly name: string;
+    readonly follower_count: number;
+    readonly likes_count?: number;
+    readonly outreach_status: string;
+    readonly profile_url: string;
+  }>;
 }
 
 export interface CreatorFilters {

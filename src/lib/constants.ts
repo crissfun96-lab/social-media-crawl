@@ -65,3 +65,28 @@ export function formatNumber(n: number | null | undefined): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toString();
 }
+
+// Creator tier system based on follower count
+export type CreatorTier = 'nano' | 'micro' | 'mid' | 'macro' | 'mega';
+
+export const CREATOR_TIERS: readonly { readonly tier: CreatorTier; readonly label: string; readonly min: number; readonly max: number; readonly color: string; readonly emoji: string }[] = [
+  { tier: 'nano', label: 'Nano', min: 0, max: 999, color: 'bg-zinc-700 text-zinc-300', emoji: '🌱' },
+  { tier: 'micro', label: 'Micro', min: 1000, max: 9999, color: 'bg-sky-900 text-sky-300', emoji: '⚡' },
+  { tier: 'mid', label: 'Mid-Tier', min: 10000, max: 49999, color: 'bg-violet-900 text-violet-300', emoji: '🔥' },
+  { tier: 'macro', label: 'Macro', min: 50000, max: 199999, color: 'bg-amber-900 text-amber-300', emoji: '💎' },
+  { tier: 'mega', label: 'Mega', min: 200000, max: Infinity, color: 'bg-rose-900 text-rose-300', emoji: '👑' },
+] as const;
+
+export function getCreatorTier(followerCount: number | null | undefined): typeof CREATOR_TIERS[number] {
+  const count = followerCount ?? 0;
+  return CREATOR_TIERS.find(t => count >= t.min && count <= t.max) ?? CREATOR_TIERS[0];
+}
+
+export function formatCompactNumber(n: number | null | undefined): string {
+  if (n == null || n === 0) return '—';
+  if (n >= 10_000_000) return `${(n / 1_000_000).toFixed(0)}M`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 10_000) return `${(n / 1_000).toFixed(0)}K`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}

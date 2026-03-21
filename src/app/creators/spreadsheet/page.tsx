@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusSelect } from '@/components/creators/status-select';
 import { LoadingPage } from '@/components/ui/spinner';
-import { formatNumber, OUTREACH_STATUS_OPTIONS, PLATFORM_OPTIONS } from '@/lib/constants';
+import { formatNumber, OUTREACH_STATUS_OPTIONS, PLATFORM_OPTIONS, getCreatorTier } from '@/lib/constants';
 import type { Creator, OutreachStatus } from '@/types/database';
 
 const PAGE_SIZE = 50;
@@ -104,9 +104,16 @@ export default function SpreadsheetPage() {
                 <tr key={creator.id} className="hover:bg-zinc-800/40 transition-colors">
                   <td className="py-1.5 px-2 text-center text-zinc-600">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="py-1.5 px-2">
-                    <Link href={`/creators/${creator.id}`} className="text-zinc-200 hover:text-indigo-400 font-medium">
-                      {creator.name}
-                    </Link>
+                    <div className="flex items-center gap-1.5">
+                      <Link href={`/creators/${creator.id}`} className="text-zinc-200 hover:text-indigo-400 font-medium zh-text">
+                        {creator.name}
+                      </Link>
+                      {creator.follower_count != null && creator.follower_count > 0 && (
+                        <span className={`${getCreatorTier(creator.follower_count).color} text-[9px] px-1 py-0 rounded`}>
+                          {getCreatorTier(creator.follower_count).emoji}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-zinc-600">@{creator.username}</div>
                   </td>
                   <td className="py-1.5 px-2">
@@ -117,7 +124,7 @@ export default function SpreadsheetPage() {
                         rel="noopener noreferrer"
                         className="text-indigo-400 hover:text-indigo-300 underline"
                       >
-                        Open Post
+                        Open Profile
                       </a>
                     ) : (
                       <span className="text-zinc-600">—</span>

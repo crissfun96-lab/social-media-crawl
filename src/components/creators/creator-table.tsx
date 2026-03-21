@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { formatNumber, getPlatformLabel } from '@/lib/constants';
+import { formatNumber, getPlatformLabel, getCreatorTier } from '@/lib/constants';
 import { StatusSelect } from './status-select';
 import { CreatorCardList } from './creator-card';
 import type { Creator, OutreachStatus } from '@/types/database';
@@ -125,8 +125,15 @@ export function CreatorTable({
                   <td className="py-3 px-2">
                     <div className="relative group/tooltip">
                       <Link href={`/creators/${creator.id}`} className="group">
-                        <div className="font-medium text-zinc-200 group-hover:text-indigo-400 transition-colors">
-                          {creator.name}
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-zinc-200 group-hover:text-indigo-400 transition-colors zh-text">
+                            {creator.name}
+                          </span>
+                          {creator.follower_count != null && creator.follower_count > 0 && (
+                            <span className={`${getCreatorTier(creator.follower_count).color} text-[9px] px-1 py-0 rounded`}>
+                              {getCreatorTier(creator.follower_count).emoji}
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-zinc-500">@{creator.username}</div>
                       </Link>
@@ -160,7 +167,7 @@ export function CreatorTable({
                         {creator.profile_url && (
                           <a href={creator.profile_url} target="_blank" rel="noopener noreferrer"
                             className="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1">
-                            View XHS Post →
+                            View XHS Profile →
                           </a>
                         )}
                       </div>

@@ -1,12 +1,13 @@
 import { db } from '@/lib/firebase';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import type { Creator, Platform, PostWithCreator } from '@/types/database';
+import { CREATOR_TIERS, OUTREACH_STATUS_OPTIONS, getCreatorTier } from '@/lib/constants';
 
 export async function GET() {
   try {
     const [creatorsSnap, postsCountSnap, postsAboutUsCountSnap, recentCandidatesSnap] =
       await Promise.all([
-        db().collection('creators').select('platform', 'outreach_status').get(),
+        db().collection('creators').select('platform', 'outreach_status', 'follower_count', 'likes_count', 'name', 'profile_url').get(),
         db().collection('posts').count().get(),
         db().collection('posts').where('is_about_byondwalls', '==', true).count().get(),
         // Fetch recent posts ordered by date, then filter in-memory to avoid a
@@ -14,7 +15,7 @@ export async function GET() {
         db().collection('posts').orderBy('created_at', 'desc').limit(50).get(),
       ]);
 
-    const creators = creatorsSnap.docs.map(doc => doc.data() as Pick<Creator, 'platform' | 'outreach_status'>);
+    const creators = creatorsSnap.docs.map(doc => doc.data() as Pick<Creator, 'platform' | 'outreach_status' | 'follower_count' | 'name' | 'profile_url'> & { readonly likes_count?: number | null });
 
     const platformCounts = new Map<string, number>();
     const statusCounts = new Map<string, number>();
@@ -65,6 +66,48 @@ export async function GET() {
       creators: creatorMap.get(post.creator_id) ?? null,
     }));
 
+    // Tier breakdown: count creators in each tier based on follower_count
+    const tierCounts = new Map<string, number>();
+    for (const tier of CREATOR_TIERS) {
+      tierCounts.set(tier.tier, 0);
+    }
+    for (const c of creators) {
+      const tier = getCreatorTier(c.follower_count);
+      tierCounts.set(tier.tier, (tierCounts.get(tier.tier) ?? 0) + 1);
+    }
+    const tierBreakdown = CREATOR_TIERS.map(t => ({
+      tier: t.tier,
+      label: t.label,
+      emoji: t.emoji,
+      color: t.color,
+      count: tierCounts.get(t.tier) ?? 0,
+    }));
+
+    // Top 5 creators by follower_count descending
+    const topCreators = [...creators]
+      .sort((a, b) => (b.follower_count ?? 0) - (a.follower_count ?? 0))
+      .slice(0, 5)
+      .map(c => ({
+        name: c.name,
+        follower_count: c.follower_count,
+        likes_count: c.likes_count,
+        outreach_status: c.outreach_status,
+        profile_url: c.profile_url,
+      }));
+
+    // Outreach funnel: ordered array of {status, count, percentage}
+    const totalCreatorsCount = creators.length || 1;
+    const outreachFunnel = OUTREACH_STATUS_OPTIONS.map(opt => {
+      const count = statusCounts.get(opt.value) ?? 0;
+      return {
+        status: opt.value,
+        label: opt.label,
+        color: opt.color,
+        count,
+        percentage: Math.round((count / totalCreatorsCount) * 100),
+      };
+    });
+
     return successResponse({
       totalCreators: creatorsSnap.size,
       byPlatform,
@@ -72,6 +115,9 @@ export async function GET() {
       recentPosts: recentPostsWithCreators,
       totalPosts: postsCountSnap.data().count,
       postsAboutUs: postsAboutUsCountSnap.data().count,
+      tierBreakdown,
+      topCreators,
+      outreachFunnel,
     });
   } catch (err) {
     return errorResponse(err instanceof Error ? err.message : 'Internal server error', 500);

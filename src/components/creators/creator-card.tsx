@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { formatNumber, getPlatformLabel } from '@/lib/constants';
+import { formatNumber, getPlatformLabel, getCreatorTier } from '@/lib/constants';
 import { StatusSelect } from './status-select';
 import type { Creator, OutreachStatus } from '@/types/database';
 
@@ -14,13 +14,19 @@ interface CreatorCardProps {
 export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
   const xhsPostUrl = creator.profile_url;
   const likesCount = (creator as Creator & { readonly likes_count?: number }).likes_count;
+  const tier = getCreatorTier(creator.follower_count);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3 hover:border-zinc-700 transition-colors">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <Link href={`/creators/${creator.id}`} className="flex-1 min-w-0">
-          <div className="font-semibold text-zinc-100 truncate">{creator.name}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-zinc-100 truncate zh-text">{creator.name}</span>
+            {creator.follower_count != null && creator.follower_count > 0 && (
+              <Badge className={`${tier.color} text-[10px] px-1.5 py-0`}>{tier.emoji} {tier.label}</Badge>
+            )}
+          </div>
           <div className="text-xs text-zinc-500 truncate">@{creator.username}</div>
         </Link>
         <div className="flex items-center gap-2 flex-shrink-0">
