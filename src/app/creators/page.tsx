@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Papa from 'papaparse';
 import { PageHeader } from '@/components/layout/page-header';
 import { CreatorFilters } from '@/components/creators/creator-filters';
-import { CreatorTable } from '@/components/creators/creator-table';
+import { CreatorTable, type SortField, type SortOrder } from '@/components/creators/creator-table';
 import { BulkActions } from '@/components/creators/bulk-actions';
 import { CsvExport } from '@/components/creators/csv-export';
 import { Pagination } from '@/components/creators/pagination';
@@ -23,6 +23,8 @@ export default function CreatorsPage() {
   const [hasPostedAboutUs, setHasPostedAboutUs] = useState('');
   const [location, setLocation] = useState('');
   const [page, setPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +39,8 @@ export default function CreatorsPage() {
   if (outreachStatus) queryParams.set('outreach_status', outreachStatus);
   if (hasPostedAboutUs) queryParams.set('has_posted_about_us', hasPostedAboutUs);
   if (debouncedLocation) queryParams.set('location', debouncedLocation);
+  queryParams.set('sort_by', sortField);
+  queryParams.set('sort_order', sortOrder);
 
   const { data: creators, loading: creatorsLoading, error: creatorsError, refetch: creatorsRefetch } = useCustomCreatorsFetch(
     `/api/creators?${queryParams.toString()}`
@@ -74,6 +78,16 @@ export default function CreatorsPage() {
     setSelectedIds(new Set());
     creatorsRefetch();
   }, [selectedIds, creatorsRefetch]);
+
+  const handleSort = useCallback((field: SortField) => {
+    if (field === sortField) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+    setPage(1);
+  }, [sortField]);
 
   const handleSingleStatusChange = useCallback(async (id: string, status: OutreachStatus) => {
     await fetch(`/api/creators/${id}`, {
@@ -223,6 +237,9 @@ export default function CreatorsPage() {
             onToggleSelectAll={handleToggleSelectAll}
             allSelected={creators.items.length > 0 && selectedIds.size === creators.items.length}
             onStatusChange={handleSingleStatusChange}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSort={handleSort}
           />
           <Pagination
             page={creators.page}

@@ -2,9 +2,39 @@
 
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { formatNumber, getPlatformLabel, getOutreachStatusConfig } from '@/lib/constants';
+import { formatNumber, getPlatformLabel } from '@/lib/constants';
+import { StatusSelect } from './status-select';
 import { CreatorCardList } from './creator-card';
 import type { Creator, OutreachStatus } from '@/types/database';
+
+export type SortField = 'name' | 'follower_count' | 'outreach_status' | 'location' | 'likes_count' | 'created_at';
+export type SortOrder = 'asc' | 'desc';
+
+interface SortHeaderProps {
+  readonly label: string;
+  readonly field: SortField;
+  readonly currentSort: SortField;
+  readonly currentOrder: SortOrder;
+  readonly onSort: (field: SortField) => void;
+  readonly className?: string;
+}
+
+function SortHeader({ label, field, currentSort, currentOrder, onSort, className }: SortHeaderProps) {
+  const isActive = currentSort === field;
+  return (
+    <th
+      className={`text-left py-3 px-2 font-medium text-zinc-400 cursor-pointer select-none hover:text-zinc-200 transition-colors ${className ?? ''}`}
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <span className={`text-xs ${isActive ? 'text-indigo-400' : 'text-zinc-600'}`}>
+          {isActive ? (currentOrder === 'asc' ? '▲' : '▼') : '⇅'}
+        </span>
+      </div>
+    </th>
+  );
+}
 
 interface CreatorTableProps {
   readonly creators: readonly Creator[];
@@ -13,6 +43,9 @@ interface CreatorTableProps {
   readonly onToggleSelectAll: () => void;
   readonly allSelected: boolean;
   readonly onStatusChange?: (id: string, status: OutreachStatus) => Promise<void>;
+  readonly sortField: SortField;
+  readonly sortOrder: SortOrder;
+  readonly onSort: (field: SortField) => void;
 }
 
 export function CreatorTable({
@@ -22,11 +55,35 @@ export function CreatorTable({
   onToggleSelectAll,
   allSelected,
   onStatusChange,
+  sortField,
+  sortOrder,
+  onSort,
 }: CreatorTableProps) {
   return (
     <>
-      {/* Mobile: card layout */}
+      {/* Mobile: card layout + sort dropdown */}
       <div className="md:hidden">
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <span className="text-xs text-zinc-500">Sort:</span>
+          <select
+            value={sortField}
+            onChange={(e) => onSort(e.target.value as SortField)}
+            className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="created_at">Newest</option>
+            <option value="name">Name</option>
+            <option value="follower_count">Followers</option>
+            <option value="likes_count">Likes</option>
+            <option value="outreach_status">Status</option>
+            <option value="location">Location</option>
+          </select>
+          <button
+            onClick={() => onSort(sortField)}
+            className="text-xs text-zinc-400 hover:text-zinc-200 px-1.5 py-1 rounded bg-zinc-800 border border-zinc-700"
+          >
+            {sortOrder === 'asc' ? '▲ Asc' : '▼ Desc'}
+          </button>
+        </div>
         <CreatorCardList creators={creators} onStatusChange={onStatusChange} />
       </div>
 
@@ -43,17 +100,18 @@ export function CreatorTable({
                   className="rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500"
                 />
               </th>
-              <th className="text-left py-3 px-2 font-medium text-zinc-400">Creator</th>
+              <SortHeader label="Creator" field="name" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
               <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden sm:table-cell">Platform</th>
-              <th className="text-right py-3 px-2 font-medium text-zinc-400 hidden md:table-cell">Followers</th>
-              <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Location</th>
-              <th className="text-left py-3 px-2 font-medium text-zinc-400">Status</th>
+              <SortHeader label="Followers" field="follower_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
+              <SortHeader label="Likes" field="likes_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
+              <SortHeader label="Location" field="location" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="hidden lg:table-cell" />
+              <SortHeader label="Status" field="outreach_status" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
               <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Tags</th>
             </tr>
           </thead>
           <tbody>
             {creators.map((creator) => {
-              const statusConfig = getOutreachStatusConfig(creator.outreach_status);
+              const likesCount = (creator as Creator & { readonly likes_count?: number }).likes_count;
               return (
                 <tr key={creator.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
                   <td className="py-3 px-2">
@@ -82,10 +140,12 @@ export function CreatorTable({
                           {creator.follower_count != null && (
                             <div><span className="text-zinc-500">Followers:</span> <span className="text-zinc-300">{formatNumber(creator.follower_count)}</span></div>
                           )}
+                          {likesCount != null && (
+                            <div><span className="text-zinc-500">Likes:</span> <span className="text-zinc-300">{formatNumber(likesCount)}</span></div>
+                          )}
                           {creator.location && (
                             <div><span className="text-zinc-500">Location:</span> <span className="text-zinc-300">{creator.location}</span></div>
                           )}
-                          <div><span className="text-zinc-500">Status:</span> <span className={statusConfig.color + ' px-1 rounded'}>{statusConfig.label}</span></div>
                           {creator.content_type && (
                             <div><span className="text-zinc-500">Type:</span> <span className="text-zinc-300">{creator.content_type}</span></div>
                           )}
@@ -112,11 +172,19 @@ export function CreatorTable({
                   <td className="py-3 px-2 text-right text-zinc-300 hidden md:table-cell">
                     {formatNumber(creator.follower_count)}
                   </td>
+                  <td className="py-3 px-2 text-right text-zinc-300 hidden md:table-cell">
+                    {likesCount != null ? formatNumber(likesCount) : '-'}
+                  </td>
                   <td className="py-3 px-2 text-zinc-400 hidden lg:table-cell">
                     {creator.location ?? '-'}
                   </td>
                   <td className="py-3 px-2">
-                    <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                    <StatusSelect
+                      creatorId={creator.id}
+                      currentStatus={creator.outreach_status}
+                      onStatusChange={onStatusChange}
+                      compact
+                    />
                   </td>
                   <td className="py-3 px-2 hidden lg:table-cell">
                     <div className="flex flex-wrap gap-1">

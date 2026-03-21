@@ -1,19 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { formatNumber, getPlatformLabel, getOutreachStatusConfig, OUTREACH_STATUS_OPTIONS } from '@/lib/constants';
+import { formatNumber, getPlatformLabel } from '@/lib/constants';
+import { StatusSelect } from './status-select';
 import type { Creator, OutreachStatus } from '@/types/database';
-
-const STATUS_ORDER: readonly OutreachStatus[] = [
-  'not_contacted',
-  'contacted',
-  'responded',
-  'agreed',
-  'posted',
-  'declined',
-];
 
 interface CreatorCardProps {
   readonly creator: Creator;
@@ -21,29 +12,11 @@ interface CreatorCardProps {
 }
 
 export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
-  const [isChangingStatus, setIsChangingStatus] = useState(false);
-  const statusConfig = getOutreachStatusConfig(creator.outreach_status);
-
-  const handleStatusCycle = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!onStatusChange || isChangingStatus) return;
-
-    const currentIndex = STATUS_ORDER.indexOf(creator.outreach_status as OutreachStatus);
-    const nextStatus = STATUS_ORDER[(currentIndex + 1) % STATUS_ORDER.length];
-
-    setIsChangingStatus(true);
-    try {
-      await onStatusChange(creator.id, nextStatus);
-    } finally {
-      setIsChangingStatus(false);
-    }
-  }, [creator.id, creator.outreach_status, onStatusChange, isChangingStatus]);
-
   const xhsPostUrl = creator.profile_url;
+  const likesCount = (creator as Creator & { readonly likes_count?: number }).likes_count;
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3 active:scale-[0.98] transition-transform">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <Link href={`/creators/${creator.id}`} className="flex-1 min-w-0">
@@ -65,6 +38,14 @@ export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
             <span className="font-medium text-zinc-300">{formatNumber(creator.follower_count)}</span>
           </div>
         )}
+        {likesCount != null && likesCount > 0 && (
+          <div className="flex items-center gap-1 text-zinc-400">
+            <svg className="h-4 w-4 text-red-500/70" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+            </svg>
+            <span className="font-medium text-zinc-300">{formatNumber(likesCount)}</span>
+          </div>
+        )}
         {creator.location && (
           <div className="flex items-center gap-1 text-zinc-500 text-xs">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -78,24 +59,14 @@ export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
 
       {/* Action row */}
       <div className="flex items-center gap-2">
-        {/* One-tap status change */}
-        <button
-          onClick={handleStatusCycle}
-          disabled={isChangingStatus || !onStatusChange}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium
-            transition-all min-h-[44px] border
-            ${isChangingStatus ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 cursor-pointer'}
-            ${statusConfig.color} border-current/20`}
-          title="Tap to advance status"
-        >
-          <span className={`w-1.5 h-1.5 rounded-full bg-current`} />
-          {isChangingStatus ? 'Updating…' : statusConfig.label}
-          {onStatusChange && !isChangingStatus && (
-            <svg className="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          )}
-        </button>
+        {/* Status dropdown with confirm */}
+        <div className="flex-1">
+          <StatusSelect
+            creatorId={creator.id}
+            currentStatus={creator.outreach_status}
+            onStatusChange={onStatusChange}
+          />
+        </div>
 
         {/* Open XHS post */}
         {xhsPostUrl && (
@@ -106,7 +77,6 @@ export function CreatorCard({ creator, onStatusChange }: CreatorCardProps) {
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium
               bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 transition-colors min-h-[44px] min-w-[44px]"
             title="Open XHS profile"
-            onClick={(e) => e.stopPropagation()}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
