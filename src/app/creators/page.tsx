@@ -202,6 +202,9 @@ export default function CreatorsPage() {
               Import CSV
             </Button>
             <CsvExport creators={creators?.items ?? []} />
+            <Link href="/creators/spreadsheet">
+              <Button variant="secondary" size="sm">Spreadsheet</Button>
+            </Link>
             <Link href="/import">
               <Button size="sm">+ Add Creators</Button>
             </Link>
