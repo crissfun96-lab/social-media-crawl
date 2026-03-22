@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Certified Architect — Foundations Exam Study Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090b;--bg-card:#18181b;--bg-card-alt:#1c1c20;--bg-hover:#27272a;
+  --text:#fafafa;--text-muted:#a1a1aa;--text-dim:#71717a;
+  --accent:#6366f1;--accent-light:#818cf8;--accent-dark:#4f46e5;
+  --green:#22c55e;--yellow:#eab308;--red:#ef4444;
+  --border:#27272a;--border-light:#3f3f46;
+  --radius:8px;--radius-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"SF Mono",SFMono-Regular,ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --sidebar-w:280px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+a{color:var(--accent-light);text-decoration:none;transition:color .2s}
+a:hover{color:var(--accent)}
+h1,h2,h3,h4{font-weight:700;line-height:1.3}
+h1{font-size:2rem}
+h2{font-size:1.5rem;margin-bottom:.75rem}
+h3{font-size:1.15rem;margin-bottom:.5rem}
+p{margin-bottom:.75rem}
+ul,ol{padding-left:1.5rem;margin-bottom:.75rem}
+li{margin-bottom:.35rem}
+code{font-family:var(--mono);background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-size:.9em}
+
+/* Sidebar */
+.sidebar{
+  position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;
+  background:var(--bg-card);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:100;transform:translateX(-100%);transition:transform .3s ease;
+  padding:1.5rem 1rem;
+}
+.sidebar.open{transform:translateX(0)}
+.sidebar-brand{display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.sidebar-brand span{font-size:.85rem;font-weight:600;color:var(--accent-light);letter-spacing:.5px;text-transform:uppercase}
+.sidebar-brand .logo{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:800;color:#fff}
+.nav-group{margin-bottom:1.25rem}
+.nav-group-title{font-size:.65rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:.5rem;font-weight:600}
+.nav-link{display:block;padding:6px 10px;border-radius:6px;font-size:.82rem;color:var(--text-muted);transition:all .15s;cursor:pointer}
+.nav-link:hover{background:var(--bg-hover);color:var(--text)}
+.nav-link.active{background:var(--accent-dark);color:#fff}
+.sidebar-close{display:none;position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer}
+
+/* Hamburger */
+.hamburger{
+  position:fixed;top:1rem;left:1rem;z-index:200;width:40px;height:40px;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;
+}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text);border-radius:2px;transition:all .3s}
+.hamburger.active span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+.hamburger.active span:nth-child(2){opacity:0}
+.hamburger.active span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.active{opacity:1;pointer-events:all}
+
+/* Main */
+.main{padding:2rem 1.25rem;max-width:900px;margin:0 auto}
+
+/* Desktop */
+@media(min-width:1024px){
+  .sidebar{transform:translateX(0)}
+  .hamburger{display:none}
+  .main{margin-left:var(--sidebar-w);padding:2.5rem 3rem}
+  .sidebar-close{display:none!important}
+}
+@media(max-width:1023px){
+  .sidebar-close{display:block}
+}
+
+/* Hero */
+.hero{text-align:center;padding:2rem 0 2.5rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem}
+.hero-badge{display:inline-block;background:linear-gradient(135deg,var(--accent-dark),var(--accent));padding:4px 14px;border-radius:20px;font-size:.75rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:1rem;color:#fff}
+.hero h1{font-size:1.75rem;margin-bottom:.5rem}
+.hero p{color:var(--text-muted);font-size:.95rem}
+@media(min-width:768px){.hero h1{font-size:2.25rem}}
+
+/* Sections */
+.section{margin-bottom:3rem;scroll-margin-top:1.5rem}
+.section-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;cursor:pointer;user-select:none}
+.section-header h2{flex:1}
+.section-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:8px;background:var(--accent);
+  font-size:.8rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.section-toggle{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;background:var(--bg-hover);color:var(--text-muted);
+  transition:transform .3s;font-size:.9rem;flex-shrink:0;border:none;cursor:pointer;
+}
+.section-toggle.collapsed{transform:rotate(-90deg)}
+.section-body{overflow:hidden;transition:max-height .4s ease,opacity .3s ease;max-height:5000px;opacity:1}
+.section-body.collapsed{max-height:0;opacity:0}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.card-alt{background:var(--bg-card-alt)}
+
+/* Tip boxes */
+.tip{border-left:4px solid var(--accent);background:var(--bg-card);padding:1rem 1.25rem;border-radius:0 var(--radius) var(--radius) 0;margin:1rem 0}
+.tip-green{border-left-color:var(--green)}
+.tip-yellow{border-left-color:var(--yellow)}
+.tip-red{border-left-color:var(--red)}
+.tip-title{font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem}
+.tip-green .tip-title{color:var(--green)}
+.tip-yellow .tip-title{color:var(--yellow)}
+.tip-red .tip-title{color:var(--red)}
+
+/* Domain bars */
+.domain-bar{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.domain-label{font-size:.85rem;min-width:100px;text-align:right;color:var(--text-muted)}
+.domain-track{flex:1;height:28px;background:var(--bg-hover);border-radius:6px;overflow:hidden;position:relative}
+.domain-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;font-size:.75rem;font-weight:700;color:#fff;transition:width .8s ease}
+.domain-pct{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.75rem;font-weight:600;color:var(--text-muted)}
+@media(max-width:600px){.domain-label{min-width:60px;font-size:.75rem}}
+
+/* Flow diagrams */
+.flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0;margin:1.25rem 0}
+.flow-box{
+  background:var(--bg-card);border:2px solid var(--accent);border-radius:var(--radius);
+  padding:.5rem .9rem;font-size:.8rem;font-weight:600;text-align:center;min-width:90px;
+  position:relative;
+}
+.flow-box.highlight{background:var(--accent-dark);border-color:var(--accent-light)}
+.flow-box.green-border{border-color:var(--green)}
+.flow-box.yellow-border{border-color:var(--yellow)}
+.flow-box.red-border{border-color:var(--red)}
+.flow-arrow{color:var(--accent-light);font-size:1.2rem;padding:0 .3rem;flex-shrink:0}
+.flow-arrow-down{display:none}
+@media(max-width:500px){
+  .flow{flex-direction:column;gap:.35rem}
+  .flow-arrow{transform:rotate(90deg)}
+}
+
+/* Loop flow */
+.flow-loop{position:relative;padding-bottom:1rem;margin-bottom:.5rem}
+.flow-loop .loop-back{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  font-size:.7rem;color:var(--yellow);font-weight:600;
+}
+
+/* Grid layouts */
+.grid-2{display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:640px){.grid-2{grid-template-columns:1fr 1fr}}
+.grid-3{display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:640px){.grid-3{grid-template-columns:1fr 1fr 1fr}}
+
+/* Tags */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600;margin-right:.35rem}
+.tag-green{background:rgba(34,197,94,.15);color:var(--green)}
+.tag-yellow{background:rgba(234,179,8,.15);color:var(--yellow)}
+.tag-red{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-accent{background:rgba(99,102,241,.15);color:var(--accent-light)}
+
+/* Tables */
+.table-wrap{overflow-x:auto;margin:1rem 0}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:.6rem .75rem;background:var(--bg-hover);border-bottom:2px solid var(--border-light);font-weight:600;color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.5px}
+td{padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+
+/* Quiz */
+.quiz-q{margin-bottom:1.5rem}
+.quiz-q h4{margin-bottom:.75rem}
+.quiz-option{
+  display:block;padding:.6rem 1rem;margin-bottom:.35rem;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  cursor:pointer;font-size:.88rem;transition:all .15s;
+}
+.quiz-option:hover{border-color:var(--accent);background:var(--bg-hover)}
+.quiz-option.correct{border-color:var(--green);background:rgba(34,197,94,.08)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.quiz-explain{display:none;margin-top:.5rem;padding:.75rem 1rem;background:var(--bg-card-alt);border-radius:var(--radius);font-size:.85rem;border-left:3px solid var(--green)}
+.quiz-explain.show{display:block}
+
+/* Progress tracker */
+.progress-bar{position:fixed;top:0;left:0;right:0;height:3px;z-index:300;background:var(--bg)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-dark),var(--accent-light));width:0;transition:width .3s}
+
+/* Calendar */
+.cal-day{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem;margin-bottom:.5rem}
+.cal-day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.cal-day-title{font-weight:700;font-size:.9rem}
+.cal-day-time{font-size:.75rem;color:var(--text-dim)}
+.cal-tasks{font-size:.85rem;color:var(--text-muted)}
+.cal-tasks li{margin-bottom:.2rem}
+
+/* Flywheel */
+.flywheel{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;margin:1rem 0}
+.flywheel-step{
+  background:var(--bg-card);border:2px solid var(--accent);border-radius:50px;
+  padding:.4rem 1rem;font-size:.78rem;font-weight:600;position:relative;
+}
+.flywheel-arrow{color:var(--accent-light);font-size:1.1rem;display:flex;align-items:center}
+
+/* Scenario cards */
+.scenario{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.scenario-num{font-size:.7rem;font-weight:700;color:var(--accent-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem}
+
+/* Study matrix */
+.priority-row{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--bg-card);border-radius:var(--radius);margin-bottom:.5rem}
+.priority-badge{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;flex-shrink:0}
+.p1{background:var(--red)}.p2{background:#f97316}.p3{background:var(--yellow)}.p4{background:var(--green)}.p5{background:var(--text-dim)}
+
+/* Print */
+@media print{
+  .sidebar,.hamburger,.overlay,.progress-bar{display:none!important}
+  .main{margin-left:0;max-width:100%}
+  .section-body.collapsed{max-height:none;opacity:1}
+  body{background:#fff;color:#000}
+  .card,.tip,.scenario,.cal-day,.priority-row,.flow-box{border:1px solid #ccc}
+}
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Hamburger -->
+<button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <button class="sidebar-close" id="sidebarClose" aria-label="Close navigation">&times;</button>
+  <div class="sidebar-brand">
+    <div class="logo">A</div>
+    <span>Architect Exam</span>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Overview</div>
+    <a class="nav-link" href="#why-certified">Why Get Certified</a>
+    <a class="nav-link" href="#exam-format">Exam Format</a>
+    <a class="nav-link" href="#domains">5 Domains &amp; Weights</a>
+    <a class="nav-link" href="#gap-analysis">Knowledge Gap Map</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Domain Deep Dives</div>
+    <a class="nav-link" href="#domain1">D1: Agentic Architecture</a>
+    <a class="nav-link" href="#domain2">D2: Tool Design &amp; MCP</a>
+    <a class="nav-link" href="#domain3">D3: Claude Code Config</a>
+    <a class="nav-link" href="#domain4">D4: Prompt Engineering</a>
+    <a class="nav-link" href="#domain5">D5: Context &amp; Reliability</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Exam Prep</div>
+    <a class="nav-link" href="#scenarios">6 Exam Scenarios</a>
+    <a class="nav-link" href="#sample-questions">Sample Questions</a>
+    <a class="nav-link" href="#study-matrix">Priority Study Matrix</a>
+    <a class="nav-link" href="#study-plan">2-Week Study Plan</a>
+    <a class="nav-link" href="#exam-day">Exam Day Strategy</a>
+    <a class="nav-link" href="#resources">Key Resources</a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+
+<!-- Hero -->
+<div class="hero" id="top">
+  <div class="hero-badge">Anthropic Certification</div>
+  <h1>Claude Certified Architect<br>Foundations Exam</h1>
+  <p>The definitive study guide. Every domain, every pattern, every strategy.</p>
+</div>
+
+<!-- Section 1: Why Get Certified -->
+<section class="section" id="why-certified">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">1</span>
+    <h2>Why Get Certified &mdash; Value Proposition</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="tip">
+      <div class="tip-title">First-Mover Advantage</div>
+      <p>This is Anthropic's <strong>first certification program ever</strong>. Early adopters get listed before the market floods. The directory is small, the demand is enormous.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Enterprise Credibility</h3>
+        <ul>
+          <li>Validates AI architecture skills to enterprise procurement teams</li>
+          <li>Listed in <strong>Anthropic's certified professional directory</strong> &mdash; clients search here first</li>
+          <li>Differentiator in proposals and RFPs</li>
+          <li>Consulting premium: <strong>$200&ndash;$500/hr</strong> for certified AI architects</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Chris-Specific Value</h3>
+        <ul>
+          <li><strong>Credibility bridge:</strong> Restaurant CEO &rarr; Certified AI Consultant</li>
+          <li>Upsell AI services to HWC Coffee (75+ outlets) and De Core Wellness</li>
+          <li><strong>Blue ocean:</strong> Certified Claude architects in Southeast Asia are extremely rare</li>
+          <li>Opens doors to Anthropic partner programs and referrals</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1.25rem;margin-bottom:.75rem">Career Flywheel</h3>
+    <div class="flywheel">
+      <div class="flywheel-step">Certification</div>
+      <div class="flywheel-arrow">&rarr;</div>
+      <div class="flywheel-step">Credibility</div>
+      <div class="flywheel-arrow">&rarr;</div>
+      <div class="flywheel-step">Better Clients</div>
+      <div class="flywheel-arrow">&rarr;</div>
+      <div class="flywheel-step">Higher Revenue</div>
+      <div class="flywheel-arrow">&rarr;</div>
+      <div class="flywheel-step">More AI Projects</div>
+      <div class="flywheel-arrow">&rarr;</div>
+      <div class="flywheel-step">Advanced Cert</div>
+    </div>
+
+    <div class="tip tip-green">
+      <div class="tip-title">Bottom Line</div>
+      <p>This certification pays for itself with a single consulting engagement. The ROI is asymmetric &mdash; small investment, outsized signal.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 2: Exam Format -->
+<section class="section" id="exam-format">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">2</span>
+    <h2>Exam Format</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Question Types</h3>
+        <ul>
+          <li><strong>Multiple choice</strong> &mdash; single correct answer</li>
+          <li><strong>Multiple select</strong> &mdash; two or more correct answers (instructions will say "select all that apply")</li>
+          <li>All questions reference <strong>6 real-world scenarios</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Scoring</h3>
+        <ul>
+          <li><strong>Passing score: 720 / 1000</strong> (scaled scoring)</li>
+          <li>Scaled scoring means harder questions are worth more points</li>
+          <li>No penalty for guessing &mdash; always answer every question</li>
+          <li><strong>5 weighted domains</strong> determine the question distribution</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip tip-yellow">
+      <div class="tip-title">Key Insight</div>
+      <p>The 6 scenarios are described upfront. Questions reference them by name. You will read each scenario once and answer multiple questions about it. Time management matters: read the scenario carefully the first time.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 3: Domains & Weights -->
+<section class="section" id="domains">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">3</span>
+    <h2>The 5 Domains &amp; Weights</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div style="margin-bottom:1.5rem">
+      <div class="domain-bar">
+        <div class="domain-label">D1 Agentic</div>
+        <div class="domain-track">
+          <div class="domain-fill" style="width:27%;background:linear-gradient(90deg,var(--red),#f97316)">D1</div>
+          <span class="domain-pct">27%</span>
+        </div>
+      </div>
+      <div class="domain-bar">
+        <div class="domain-label">D3 Claude Code</div>
+        <div class="domain-track">
+          <div class="domain-fill" style="width:20%;background:linear-gradient(90deg,var(--accent-dark),var(--accent))">D3</div>
+          <span class="domain-pct">20%</span>
+        </div>
+      </div>
+      <div class="domain-bar">
+        <div class="domain-label">D4 Prompts</div>
+        <div class="domain-track">
+          <div class="domain-fill" style="width:20%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)">D4</div>
+          <span class="domain-pct">20%</span>
+        </div>
+      </div>
+      <div class="domain-bar">
+        <div class="domain-label">D2 MCP</div>
+        <div class="domain-track">
+          <div class="domain-fill" style="width:18%;background:linear-gradient(90deg,var(--yellow),#facc15)">D2</div>
+          <span class="domain-pct">18%</span>
+        </div>
+      </div>
+      <div class="domain-bar">
+        <div class="domain-label">D5 Context</div>
+        <div class="domain-track">
+          <div class="domain-fill" style="width:15%;background:linear-gradient(90deg,var(--green),#4ade80)">D5</div>
+          <span class="domain-pct">15%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Domain</th><th>Weight</th><th>Focus Areas</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Agentic Architecture &amp; Orchestration</td><td><strong>27%</strong></td><td>6 patterns, when to use agents, HITL, multi-agent</td></tr>
+          <tr><td>2</td><td>Tool Design &amp; MCP Integration</td><td><strong>18%</strong></td><td>MCP primitives, transport, tool schemas, anti-patterns</td></tr>
+          <tr><td>3</td><td>Claude Code Configuration &amp; Workflows</td><td><strong>20%</strong></td><td>Config hierarchy, hooks, permissions, CLAUDE.md</td></tr>
+          <tr><td>4</td><td>Prompt Engineering &amp; Structured Output</td><td><strong>20%</strong></td><td>System prompts, few-shot, CoT, JSON mode, prefill</td></tr>
+          <tr><td>5</td><td>Context Management &amp; Reliability</td><td><strong>15%</strong></td><td>RAG, caching, token budgets, guardrails, monitoring</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Critical</div>
+      <p>Domain 1 alone is <strong>27% of the exam</strong>. If you nail the 6 agentic patterns and know when NOT to use agents, you've secured the single biggest scoring block.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 4: Gap Analysis -->
+<section class="section" id="gap-analysis">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">4</span>
+    <h2>Knowledge Gap Heat Map</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <p style="color:var(--text-muted);margin-bottom:1.25rem">Based on your profile: daily Claude Code user, OpenClaw multi-agent system, FoxieBot Telegram bridge, KOC CRM with Firestore, MCP servers, hooks, and cron jobs.</p>
+
+    <div class="tip tip-green">
+      <div class="tip-title">Strong &mdash; Minimal Study Needed</div>
+      <ul>
+        <li><strong>Claude Code Configuration &amp; Workflows (20%)</strong> &mdash; you use this daily. Config hierarchy, hooks, CLAUDE.md, permissions are second nature.</li>
+        <li><strong>Practical tool integration</strong> &mdash; you have built MCP servers, a Telegram bridge bot, and integrated multiple external APIs.</li>
+      </ul>
+    </div>
+
+    <div class="tip tip-yellow">
+      <div class="tip-title">Moderate &mdash; Some Study Required</div>
+      <ul>
+        <li><strong>Tool Design &amp; MCP Integration (18%)</strong> &mdash; you use MCP but may not know the formal specification, transport layer details, or all 3 primitive types by name.</li>
+        <li><strong>Prompt Engineering basics</strong> &mdash; you write prompts daily but may not know formal pattern names (few-shot, chain-of-thought, prefilling).</li>
+      </ul>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Gap &mdash; Focused Study Required</div>
+      <ul>
+        <li><strong>Agentic Architecture &amp; Orchestration (27%)</strong> &mdash; formal design patterns, the 6 orchestration types, knowing when NOT to use agents, orchestrator-workers vs. parallelization distinction.</li>
+        <li><strong>Context Management &amp; Reliability (15%)</strong> &mdash; RAG architecture, prompt caching specifics, token budget strategies, formal guardrail patterns.</li>
+        <li><strong>Structured Output schemas</strong> &mdash; JSON mode, tool_use for extraction, XML tag patterns.</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:1.25rem">
+      <h3>Readiness Summary</h3>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.75rem">
+        <div><span class="tag tag-green">40%</span> Comfort zone</div>
+        <div><span class="tag tag-yellow">33%</span> Moderate prep</div>
+        <div><span class="tag tag-red">27%</span> Focused study</div>
+      </div>
+      <p style="margin-top:.75rem;font-weight:600">Very passable with 2&ndash;3 weeks of targeted preparation.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 5: Domain 1 Deep Dive -->
+<section class="section" id="domain1">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">5</span>
+    <h2>Domain 1: Agentic Architecture &amp; Orchestration (27%)</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="tip tip-red">
+      <div class="tip-title">Heaviest Domain</div>
+      <p>This domain carries the most weight. Master these 6 patterns and you control over a quarter of the exam.</p>
+    </div>
+
+    <!-- Pattern 1: Prompt Chaining -->
+    <div class="card" style="margin-top:1rem">
+      <h3><span class="tag tag-accent">Pattern 1</span> Prompt Chaining</h3>
+      <p>Output of one step feeds the next. A <strong>linear pipeline</strong> where each step transforms or enriches data sequentially.</p>
+      <div class="flow">
+        <div class="flow-box">Extract</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box">Validate</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box">Transform</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box highlight">Store</div>
+      </div>
+      <p><strong>When to use:</strong> Steps are sequential and dependent. Each step needs the output of the previous one. You can add "gates" between steps to verify quality before proceeding.</p>
+      <p><strong>Example:</strong> Extract text from PDF &rarr; Validate format &rarr; Transform to structured JSON &rarr; Store in database.</p>
+    </div>
+
+    <!-- Pattern 2: Routing -->
+    <div class="card">
+      <h3><span class="tag tag-accent">Pattern 2</span> Routing</h3>
+      <p>Classify input first, then route to a specialized handler. A <strong>dispatcher pattern</strong> that ensures the right tool handles the right job.</p>
+      <div class="flow">
+        <div class="flow-box highlight">Classifier</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div class="flow-box green-border">Handler A</div>
+          <div class="flow-box yellow-border">Handler B</div>
+          <div class="flow-box red-border">Handler C</div>
+        </div>
+      </div>
+      <p><strong>When to use:</strong> Different input types need fundamentally different processing. The classifier is lightweight; the handlers are specialized and expensive.</p>
+      <p><strong>Example:</strong> Customer message arrives &rarr; Classify as billing / technical / general &rarr; Route to specialized prompt + tools for that category.</p>
+    </div>
+
+    <!-- Pattern 3: Parallelization -->
+    <div class="card">
+      <h3><span class="tag tag-accent">Pattern 3</span> Parallelization</h3>
+      <p>Multiple Claude calls run <strong>simultaneously</strong>, results are aggregated. Two sub-patterns: <strong>sectioning</strong> (split task into parts) and <strong>voting</strong> (same task, multiple perspectives).</p>
+      <div class="flow">
+        <div class="flow-box highlight">Task</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div class="flow-box">Worker 1</div>
+          <div class="flow-box">Worker 2</div>
+          <div class="flow-box">Worker 3</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box highlight">Aggregate</div>
+      </div>
+      <p><strong>When to use:</strong> Subtasks are <strong>independent</strong> and can be defined upfront. Key: you know exactly what each worker should do before starting.</p>
+      <p><strong>Example (sectioning):</strong> Analyze code repo &rarr; Worker 1 reviews security, Worker 2 reviews performance, Worker 3 reviews types &rarr; Merge reports.</p>
+      <p><strong>Example (voting):</strong> Same essay graded by 3 Claude instances &rarr; majority score wins.</p>
+    </div>
+
+    <!-- Pattern 4: Orchestrator-Workers -->
+    <div class="card">
+      <h3><span class="tag tag-accent">Pattern 4</span> Orchestrator-Workers</h3>
+      <p>A central orchestrator agent <strong>dynamically delegates</strong> to worker agents. The orchestrator decides what needs to happen at runtime.</p>
+      <div class="flow">
+        <div class="flow-box highlight">Orchestrator</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div class="flow-box">Worker A</div>
+          <div class="flow-box">Worker B</div>
+          <div class="flow-box">Worker ?</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box highlight">Synthesize</div>
+      </div>
+      <div class="tip tip-yellow" style="margin-top:.75rem">
+        <div class="tip-title">Key Distinction vs. Parallelization</div>
+        <p>In parallelization, you define the workers upfront. In orchestrator-workers, the <strong>orchestrator decides at runtime</strong> what workers to spawn and what they should do. The orchestrator adapts to the input.</p>
+      </div>
+      <p><strong>When to use:</strong> Task breakdown is not known upfront. Complex requests that need dynamic decomposition.</p>
+      <p><strong>Example:</strong> "Refactor this codebase" &rarr; Orchestrator analyzes repo structure &rarr; Spawns workers per module &rarr; Workers refactor &rarr; Orchestrator merges and validates.</p>
+    </div>
+
+    <!-- Pattern 5: Evaluator-Optimizer -->
+    <div class="card">
+      <h3><span class="tag tag-accent">Pattern 5</span> Evaluator-Optimizer</h3>
+      <p>A <strong>feedback loop</strong> between a Generator and an Evaluator. The generator produces output, the evaluator critiques it, and the generator improves.</p>
+      <div class="flow flow-loop">
+        <div class="flow-box highlight">Generator</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box">Output</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box yellow-border">Evaluator</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box red-border">Feedback</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box highlight">Generator</div>
+        <span class="loop-back">&#8634; Repeat until quality threshold met</span>
+      </div>
+      <p><strong>When to use:</strong> Quality matters more than speed. Clear evaluation criteria exist. You are willing to trade latency for output quality.</p>
+      <p><strong>Example:</strong> Generate marketing copy &rarr; Evaluator checks brand voice, grammar, CTA &rarr; Feedback: "too formal, add urgency" &rarr; Generator revises &rarr; Repeat.</p>
+    </div>
+
+    <!-- Pattern 6: Autonomous Agent -->
+    <div class="card">
+      <h3><span class="tag tag-accent">Pattern 6</span> Autonomous Agent</h3>
+      <p>The most powerful and most risky pattern. An agent with tools and memory that runs a <strong>Think &rarr; Act &rarr; Observe</strong> loop until the task is done.</p>
+      <div class="flow">
+        <div class="flow-box highlight">Think</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box green-border">Act (Tool)</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box yellow-border">Observe</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box highlight">Think</div>
+      </div>
+      <p style="text-align:center;font-size:.8rem;color:var(--yellow);margin-top:.25rem">&#8634; Loop until done or exit condition</p>
+      <div class="tip tip-red" style="margin-top:.75rem">
+        <div class="tip-title">Required Safeguards</div>
+        <ul>
+          <li><strong>Exit conditions</strong> &mdash; max iterations, timeout, success criteria</li>
+          <li><strong>Token budgets</strong> &mdash; prevent runaway costs</li>
+          <li><strong>Human-in-the-loop (HITL)</strong> &mdash; approval gates for destructive actions</li>
+          <li><strong>Sandboxing</strong> &mdash; limit what tools the agent can access</li>
+        </ul>
+      </div>
+      <p><strong>When to use:</strong> Open-ended tasks where the path to solution is uncertain. The agent needs to explore, backtrack, and adapt. Always pair with safeguards.</p>
+    </div>
+
+    <!-- Keep it simple -->
+    <div class="card card-alt" style="border:2px solid var(--accent)">
+      <h3>The "Keep It Simple" Principle</h3>
+      <p>The exam explicitly tests <strong>when NOT to use agents</strong>. Key rules:</p>
+      <ul>
+        <li>Use the <strong>simplest pattern</strong> that solves the problem</li>
+        <li>A single Claude API call with a good prompt beats a complex multi-agent system for most tasks</li>
+        <li>Prompt chaining before parallelization. Parallelization before orchestrator-workers.</li>
+        <li>Autonomous agents are the <strong>last resort</strong>, not the default</li>
+        <li>More agents = more latency, more cost, more failure modes</li>
+      </ul>
+      <p><strong>Exam trap:</strong> A scenario describes a straightforward task, and one answer option proposes an elaborate multi-agent architecture. The correct answer is often the simpler approach.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 6: Domain 2 Deep Dive -->
+<section class="section" id="domain2">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">6</span>
+    <h2>Domain 2: Tool Design &amp; MCP Integration (18%)</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <h3>MCP: The 3 Primitives</h3>
+    <div class="grid-3">
+      <div class="card">
+        <h3 style="color:var(--accent-light)">Tools</h3>
+        <p>Functions the model can call. They execute actions and return results. Think: API calls, database queries, file operations.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--green)">Resources</h3>
+        <p>Data sources the model can read. They provide context without side effects. Think: files, database records, API responses.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--yellow)">Prompts</h3>
+        <p>Reusable prompt templates. They standardize how the model interacts with tools and resources. Think: parameterized system prompts.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1.5rem">MCP Architecture</h3>
+    <div class="flow">
+      <div class="flow-box highlight">Host (IDE/App)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box">Client</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box green-border">Server</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box yellow-border">External System</div>
+    </div>
+    <ul style="margin-top:.75rem">
+      <li><strong>Host:</strong> The application (Claude Desktop, IDE extension, custom app)</li>
+      <li><strong>Client:</strong> Maintains 1:1 connection with a server, handles protocol</li>
+      <li><strong>Server:</strong> Exposes tools, resources, and prompts to the client</li>
+      <li><strong>External System:</strong> Databases, APIs, file systems, etc.</li>
+    </ul>
+
+    <h3 style="margin-top:1.5rem">Transport Layer</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h3><code>stdio</code> &mdash; Local</h3>
+        <p>Standard input/output. Server runs as a child process. Best for local tools (filesystem, CLI). Low latency, simple setup.</p>
+      </div>
+      <div class="card">
+        <h3><code>SSE / HTTP</code> &mdash; Remote</h3>
+        <p>Server-Sent Events or HTTP streaming. Server runs remotely. Best for shared services, cloud tools, multi-user setups.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1.5rem">Tool Calling Flow (5 Steps)</h3>
+    <div class="flow">
+      <div class="flow-box">1. User Prompt</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box">2. Claude Selects Tool</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box highlight">3. App Executes</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box">4. Result to Claude</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box green-border">5. Final Response</div>
+    </div>
+    <p style="margin-top:.75rem;font-size:.88rem;color:var(--text-muted)">Claude never executes tools directly. Your application code sits between Claude and the tool execution. This is the "human-in-the-loop" by default.</p>
+
+    <h3 style="margin-top:1.5rem">Tool Choice Modes</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mode</th><th>Behavior</th><th>Use When</th></tr></thead>
+        <tbody>
+          <tr><td><code>auto</code></td><td>Claude decides whether to call a tool or respond directly</td><td>General use (default)</td></tr>
+          <tr><td><code>any</code></td><td>Claude must call at least one tool</td><td>Forcing tool use for structured extraction</td></tr>
+          <tr><td><code>tool</code> (specific)</td><td>Claude must call the named tool</td><td>When you know exactly which tool is needed</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:1.5rem">Tool Design Best Practices</h3>
+    <ul>
+      <li><strong>Atomic:</strong> Each tool does one thing well</li>
+      <li><strong>Clear descriptions:</strong> Claude reads the description to decide when to use it</li>
+      <li><strong>JSON Schema validation:</strong> Define input schemas with types, required fields, enums</li>
+      <li><strong>Structured results:</strong> Return JSON, not freeform text</li>
+      <li><strong>Graceful errors:</strong> Return error objects, never throw unhandled exceptions</li>
+      <li><strong>Minimal side effects:</strong> Prefer read-only tools; flag destructive tools clearly</li>
+    </ul>
+
+    <div class="tip tip-red" style="margin-top:1rem">
+      <div class="tip-title">Anti-Patterns (Expect Exam Questions)</div>
+      <ul>
+        <li><strong>God tools:</strong> One tool that does everything &mdash; confuses Claude's selection logic</li>
+        <li><strong>No descriptions:</strong> Claude cannot select the right tool without clear descriptions</li>
+        <li><strong>No input validation:</strong> Garbage in, garbage out &mdash; always validate with JSON Schema</li>
+        <li><strong>No error handling:</strong> Unhandled errors crash the agentic loop</li>
+        <li><strong>Exposing raw internals:</strong> Tool names/schemas that leak implementation details</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 7: Domain 3 Deep Dive -->
+<section class="section" id="domain3">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">7</span>
+    <h2>Domain 3: Claude Code Configuration &amp; Workflows (20%)</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <h3>Configuration Hierarchy (Highest to Lowest Priority)</h3>
+    <div class="flow" style="flex-direction:column;align-items:stretch;gap:.5rem">
+      <div class="flow-box" style="width:100%;text-align:left"><strong>1. Environment Variables</strong> &mdash; Override everything. <code>CLAUDE_CODE_*</code> vars.</div>
+      <div style="text-align:center;color:var(--accent-light);font-size:.8rem">&#9660; overrides</div>
+      <div class="flow-box" style="width:100%;text-align:left"><strong>2. settings.local.json</strong> &mdash; Per-project, not committed. Personal overrides.</div>
+      <div style="text-align:center;color:var(--accent-light);font-size:.8rem">&#9660; overrides</div>
+      <div class="flow-box" style="width:100%;text-align:left"><strong>3. settings.json (project)</strong> &mdash; <code>.claude/settings.json</code> in project root. Shared with team.</div>
+      <div style="text-align:center;color:var(--accent-light);font-size:.8rem">&#9660; overrides</div>
+      <div class="flow-box" style="width:100%;text-align:left"><strong>4. settings.json (global)</strong> &mdash; <code>~/.claude/settings.json</code>. Machine-wide defaults.</div>
+    </div>
+
+    <h3 style="margin-top:1.5rem">CLAUDE.md Hierarchy</h3>
+    <div class="flow" style="flex-direction:column;align-items:stretch;gap:.5rem">
+      <div class="flow-box" style="width:100%;text-align:left"><strong>1. Subdirectory CLAUDE.md</strong> &mdash; Most specific. Rules for files in this folder.</div>
+      <div style="text-align:center;color:var(--accent-light);font-size:.8rem">&#9660; inherits from</div>
+      <div class="flow-box" style="width:100%;text-align:left"><strong>2. Project Root CLAUDE.md</strong> &mdash; Project-level instructions. Committed to git.</div>
+      <div style="text-align:center;color:var(--accent-light);font-size:.8rem">&#9660; inherits from</div>
+      <div class="flow-box" style="width:100%;text-align:left"><strong>3. Global ~/.claude/CLAUDE.md</strong> &mdash; Personal defaults across all projects.</div>
+    </div>
+    <p style="margin-top:.75rem;font-size:.88rem;color:var(--text-muted)">More specific files take precedence. All levels are loaded and merged &mdash; subdirectory CLAUDE.md does not replace the project-level one, it supplements it.</p>
+
+    <h3 style="margin-top:1.5rem">Hooks</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hook</th><th>Fires When</th><th>Use Cases</th></tr></thead>
+        <tbody>
+          <tr><td><code>PreToolUse</code></td><td>Before a tool executes</td><td>Validate parameters, block dangerous operations, modify inputs</td></tr>
+          <tr><td><code>PostToolUse</code></td><td>After a tool executes</td><td>Auto-format code, run linters, verify outputs</td></tr>
+          <tr><td><code>Stop</code></td><td>When Claude Code session ends</td><td>Final verification, cleanup, commit reminders</td></tr>
+          <tr><td><code>Notification</code></td><td>When Claude Code wants to notify the user</td><td>Custom notification channels, logging</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:1.5rem">Permissions &amp; Security</h3>
+    <ul>
+      <li><strong>allowedTools:</strong> Whitelist specific tools in settings. Example: <code>["Read", "Write", "Bash(git *)"]</code></li>
+      <li><strong>Permission modes:</strong> Control how Claude asks for approval. Default requires user confirmation for file writes and shell commands.</li>
+      <li><strong>Tool patterns:</strong> Use glob-like patterns to allow categories of commands. <code>Bash(npm *)</code> allows all npm commands.</li>
+    </ul>
+
+    <div class="tip tip-green">
+      <div class="tip-title">Your Advantage</div>
+      <p>You use Claude Code daily with hooks, CLAUDE.md files, and custom permissions. This domain should be near-free points on the exam. Just review the formal names and hierarchy order.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 8: Domain 4 Deep Dive -->
+<section class="section" id="domain4">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">8</span>
+    <h2>Domain 4: Prompt Engineering &amp; Structured Output (20%)</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <h3>System Prompt Design</h3>
+    <div class="card">
+      <ul>
+        <li><strong>Role definition:</strong> Tell Claude who it is and what it can/cannot do</li>
+        <li><strong>Constraints:</strong> Output format, length limits, forbidden topics</li>
+        <li><strong>Context:</strong> Background information the model needs for every response</li>
+        <li><strong>Instructions:</strong> Step-by-step rules for processing</li>
+      </ul>
+      <p style="margin-top:.5rem"><strong>Best practice order:</strong> Role &rarr; Context &rarr; Instructions &rarr; Constraints &rarr; Output Format</p>
+    </div>
+
+    <h3 style="margin-top:1.25rem">Few-Shot Prompting</h3>
+    <div class="card">
+      <p>Provide <strong>2&ndash;5 examples</strong> of input/output pairs before the actual request. Claude learns the pattern from examples.</p>
+      <ul>
+        <li><strong>2&ndash;3 examples:</strong> Sufficient for most tasks</li>
+        <li><strong>4&ndash;5 examples:</strong> Complex or ambiguous tasks</li>
+        <li>Include <strong>edge cases</strong> in examples to show handling of unusual inputs</li>
+        <li>Use consistent formatting across all examples</li>
+      </ul>
+    </div>
+
+    <h3 style="margin-top:1.25rem">Chain-of-Thought (CoT)</h3>
+    <div class="card">
+      <p>Ask Claude to <strong>think step by step</strong> before giving the final answer. Improves accuracy on reasoning-heavy tasks.</p>
+      <ul>
+        <li><strong>Simple CoT:</strong> "Think step by step before answering."</li>
+        <li><strong>Structured CoT:</strong> "First, identify X. Then, analyze Y. Finally, conclude Z."</li>
+        <li>Works best for: math, logic, multi-step analysis, code debugging</li>
+        <li>Less useful for: simple factual recall, creative writing</li>
+      </ul>
+    </div>
+
+    <h3 style="margin-top:1.25rem">Structured Output Techniques</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="color:var(--accent-light)">JSON Mode</h3>
+        <p>Force Claude to return valid JSON. Use a system prompt that specifies the exact JSON schema expected.</p>
+        <p><strong>Key:</strong> Describe the schema in the prompt. Claude will conform to it. Validate the output against the schema in your application code.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--green)">Tool Use for Extraction</h3>
+        <p>Define a "tool" with the exact schema you want, then force Claude to call it using <code>tool_choice: any</code>. The tool's input IS your structured data.</p>
+        <p><strong>Key:</strong> The tool doesn't need to do anything. You extract the arguments. Most reliable method for structured output.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--yellow)">XML Tags</h3>
+        <p>Use XML-style tags to structure output: <code>&lt;answer&gt;</code>, <code>&lt;reasoning&gt;</code>, <code>&lt;sources&gt;</code>. Claude naturally respects XML boundaries.</p>
+        <p><strong>Key:</strong> Great for mixing structured and unstructured content. Easy to parse with regex.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--red)">Prefilling</h3>
+        <p>Start Claude's response with specific text by pre-populating the <code>assistant</code> message. Forces the model to continue from that point.</p>
+        <p><strong>Key:</strong> Prefill with <code>{"</code> to force JSON. Prefill with <code>&lt;result&gt;</code> to force XML. Powerful steering technique.</p>
+      </div>
+    </div>
+
+    <div class="tip" style="margin-top:1rem">
+      <div class="tip-title">Exam Focus</div>
+      <p>Expect questions asking which structured output technique is best for a given scenario. Tool use for extraction = most reliable. JSON mode = simplest. Prefilling = most flexible steering. XML tags = best for mixed content.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 9: Domain 5 Deep Dive -->
+<section class="section" id="domain5">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">9</span>
+    <h2>Domain 5: Context Management &amp; Reliability (15%)</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="card">
+      <h3>Context Window: 200K Tokens (All Models)</h3>
+      <p>All Claude models support a 200K token context window. But filling it completely degrades performance. Strategies to manage context effectively:</p>
+    </div>
+
+    <h3 style="margin-top:1.25rem">Context Strategies</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Strategy</th><th>How It Works</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Summarization</strong></td><td>Periodically summarize conversation history and replace full history with summary</td><td>Long conversations, chat assistants</td></tr>
+          <tr><td><strong>Sliding Window</strong></td><td>Keep only the most recent N messages, drop oldest</td><td>Streaming applications, real-time chat</td></tr>
+          <tr><td><strong>RAG</strong></td><td>Retrieve relevant chunks from external store, inject into context</td><td>Large knowledge bases, documentation</td></tr>
+          <tr><td><strong>Prompt Caching</strong></td><td>Cache static prefix of prompt; only send dynamic portion</td><td>Repeated similar requests, cost reduction</td></tr>
+          <tr><td><strong>Context Budgeting</strong></td><td>Allocate token limits per section: system prompt, examples, user input, output</td><td>Production systems, predictable costs</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:1.5rem">RAG Architecture</h3>
+    <div class="flow">
+      <div class="flow-box">User Query</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box highlight">Embed Query</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box green-border">Vector Search</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box yellow-border">Top-K Chunks</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box highlight">Inject + Prompt</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box">Claude Response</div>
+    </div>
+    <ul style="margin-top:.75rem">
+      <li><strong>Chunking:</strong> Split documents into overlapping chunks (512&ndash;1024 tokens typical)</li>
+      <li><strong>Embedding:</strong> Convert chunks to vectors using an embedding model</li>
+      <li><strong>Retrieval:</strong> Find top-K most similar chunks to the user's query</li>
+      <li><strong>Injection:</strong> Place retrieved chunks into the prompt as context</li>
+      <li><strong>Generation:</strong> Claude answers based on injected context + original query</li>
+    </ul>
+
+    <h3 style="margin-top:1.5rem">Prompt Caching</h3>
+    <div class="card">
+      <p><strong>Cost reduction: ~90%</strong> on cached portions of the prompt. The API caches the static prefix and only charges full price for the dynamic suffix.</p>
+      <ul>
+        <li>System prompt, few-shot examples, and static instructions are cached</li>
+        <li>User's specific query is the dynamic (non-cached) portion</li>
+        <li>Cache has a TTL (time-to-live) &mdash; reuse within the window to benefit</li>
+        <li>Mark cache breakpoints with <code>cache_control</code> in the API request</li>
+      </ul>
+    </div>
+
+    <h3 style="margin-top:1.5rem">Reliability Patterns</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Retry with Backoff</h3>
+        <p>On transient failures (rate limits, timeouts), retry with exponential backoff. Typical: 3 retries, 1s/2s/4s delays.</p>
+      </div>
+      <div class="card">
+        <h3>Fallback Chains</h3>
+        <p>If primary model fails, fall back to secondary. Example: Opus &rarr; Sonnet &rarr; Haiku. Degrade gracefully.</p>
+      </div>
+      <div class="card">
+        <h3>Guardrails</h3>
+        <p>Input validation (block harmful prompts), output validation (check for PII, hallucinations), content filtering, schema conformance checks.</p>
+      </div>
+      <div class="card">
+        <h3>Human-in-the-Loop (HITL)</h3>
+        <p>Approval gates for high-stakes actions. Confidence thresholds: auto-approve above 95%, flag for review below. Essential for production.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem">
+      <h3>Monitoring &amp; Observability</h3>
+      <ul>
+        <li><strong>Token usage tracking:</strong> Monitor input/output tokens per request to detect drift</li>
+        <li><strong>Latency metrics:</strong> P50, P95, P99 response times</li>
+        <li><strong>Error rates:</strong> Track by error type (rate limit, timeout, content filter)</li>
+        <li><strong>Quality metrics:</strong> User feedback loops, automated eval scores</li>
+        <li><strong>Cost dashboards:</strong> Per-endpoint, per-model cost tracking</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 10: Scenarios -->
+<section class="section" id="scenarios">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">10</span>
+    <h2>The 6 Exam Scenarios</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <p style="color:var(--text-muted);margin-bottom:1rem">The exam presents 6 real-world scenarios upfront. Multiple questions reference each scenario. Know what patterns and concepts each scenario tests.</p>
+
+    <div class="scenario">
+      <div class="scenario-num">Scenario 1</div>
+      <h3>Customer Support Agent</h3>
+      <p>A company wants to build an AI-powered support system that handles billing, technical, and general inquiries across multiple channels.</p>
+      <p><strong>Tests:</strong> <span class="tag tag-accent">Routing</span> <span class="tag tag-accent">Tool Design</span> <span class="tag tag-accent">Guardrails</span> <span class="tag tag-accent">HITL</span></p>
+      <p><strong>Key concepts:</strong> Input classification, specialized handlers per category, escalation to human agents, PII handling, response quality guardrails.</p>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-num">Scenario 2</div>
+      <h3>Code Generation with Claude Code</h3>
+      <p>A dev team uses Claude Code for daily development workflows &mdash; code generation, refactoring, testing, and CI/CD integration.</p>
+      <p><strong>Tests:</strong> <span class="tag tag-accent">Claude Code Config</span> <span class="tag tag-accent">Hooks</span> <span class="tag tag-accent">Permissions</span> <span class="tag tag-accent">CLAUDE.md</span></p>
+      <p><strong>Key concepts:</strong> Config hierarchy, pre/post-tool hooks for linting, permission scoping, shared vs. personal settings.</p>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-num">Scenario 3</div>
+      <h3>Multi-Agent Research System</h3>
+      <p>A research organization needs multiple AI agents collaborating to analyze papers, extract insights, and synthesize reports.</p>
+      <p><strong>Tests:</strong> <span class="tag tag-accent">Orchestrator-Workers</span> <span class="tag tag-accent">Parallelization</span> <span class="tag tag-accent">Context Mgmt</span> <span class="tag tag-accent">RAG</span></p>
+      <p><strong>Key concepts:</strong> Dynamic task decomposition, parallel analysis, context window management for long documents, RAG for paper retrieval.</p>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-num">Scenario 4</div>
+      <h3>Developer Productivity Platform</h3>
+      <p>A platform that helps developers with code review, documentation generation, and onboarding assistance.</p>
+      <p><strong>Tests:</strong> <span class="tag tag-accent">Prompt Chaining</span> <span class="tag tag-accent">Structured Output</span> <span class="tag tag-accent">Few-Shot</span> <span class="tag tag-accent">MCP</span></p>
+      <p><strong>Key concepts:</strong> Sequential processing pipelines, extracting structured code analysis, MCP servers for IDE integration.</p>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-num">Scenario 5</div>
+      <h3>CI/CD Integration</h3>
+      <p>Integrating Claude into a continuous integration pipeline for automated code review, security scanning, and deployment decisions.</p>
+      <p><strong>Tests:</strong> <span class="tag tag-accent">Evaluator-Optimizer</span> <span class="tag tag-accent">Tool Design</span> <span class="tag tag-accent">Reliability</span> <span class="tag tag-accent">Automation</span></p>
+      <p><strong>Key concepts:</strong> Quality gates, feedback loops, automated tool invocation, retry strategies, fallback handling.</p>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-num">Scenario 6</div>
+      <h3>Structured Data Extraction</h3>
+      <p>Extracting structured data from unstructured documents (invoices, contracts, reports) at scale.</p>
+      <p><strong>Tests:</strong> <span class="tag tag-accent">Structured Output</span> <span class="tag tag-accent">Tool Use</span> <span class="tag tag-accent">Prompt Caching</span> <span class="tag tag-accent">Validation</span></p>
+      <p><strong>Key concepts:</strong> Tool use for extraction, JSON schema enforcement, prompt caching for repeated templates, output validation.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 11: Sample Questions -->
+<section class="section" id="sample-questions">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">11</span>
+    <h2>Sample Questions</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <p style="color:var(--text-muted);margin-bottom:1.25rem">Click an answer to check it. These mirror the style and difficulty of real exam questions.</p>
+
+    <!-- Q1 -->
+    <div class="quiz-q" id="q1">
+      <h4>Q1. A team needs to process customer emails by first categorizing them (billing, technical, general), then routing each to a specialized handler. Which agentic pattern is most appropriate?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1','wrong')"><strong>A.</strong> Prompt Chaining</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1','correct')"><strong>B.</strong> Routing</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1','wrong')"><strong>C.</strong> Orchestrator-Workers</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q1','wrong')"><strong>D.</strong> Autonomous Agent</div>
+      <div class="quiz-explain" id="q1-explain"><strong>B is correct.</strong> The Routing pattern classifies input first and dispatches to specialized handlers. This is exactly classification + dispatch. Orchestrator-Workers would be overkill since the categories are known upfront.</div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-q" id="q2">
+      <h4>Q2. What is the most reliable method for extracting structured data from unstructured text using the Claude API?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2','wrong')"><strong>A.</strong> Ask Claude to return JSON in a regular prompt</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2','wrong')"><strong>B.</strong> Use XML tags to structure the output</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2','correct')"><strong>C.</strong> Define a tool with the desired schema and force Claude to call it using tool_choice</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q2','wrong')"><strong>D.</strong> Prefill the assistant message with the beginning of the JSON</div>
+      <div class="quiz-explain" id="q2-explain"><strong>C is correct.</strong> Tool use for extraction is the most reliable method. You define a tool whose input parameters match your desired schema, set <code>tool_choice: any</code>, and extract the structured data from the tool arguments. The schema is enforced by the API.</div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="quiz-q" id="q3">
+      <h4>Q3. In the MCP architecture, which component maintains a 1:1 connection with an MCP server?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3','wrong')"><strong>A.</strong> Host</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3','correct')"><strong>B.</strong> Client</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3','wrong')"><strong>C.</strong> Server</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q3','wrong')"><strong>D.</strong> External System</div>
+      <div class="quiz-explain" id="q3-explain"><strong>B is correct.</strong> In MCP, the Client maintains a 1:1 connection with a Server. The Host (application) may create multiple Clients, each connecting to a different Server. The Server exposes tools, resources, and prompts.</div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="quiz-q" id="q4">
+      <h4>Q4. A Claude Code project has a CLAUDE.md in the project root and another in a subdirectory. A developer also has a global ~/.claude/CLAUDE.md. When Claude Code processes a file in the subdirectory, what happens?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q4','wrong')"><strong>A.</strong> Only the subdirectory CLAUDE.md is loaded</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q4','wrong')"><strong>B.</strong> Only the project root CLAUDE.md is loaded</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q4','correct')"><strong>C.</strong> All three are loaded and merged, with subdirectory taking highest precedence</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q4','wrong')"><strong>D.</strong> The global and project root are loaded, subdirectory is ignored</div>
+      <div class="quiz-explain" id="q4-explain"><strong>C is correct.</strong> All three CLAUDE.md files are loaded and merged. The hierarchy is: subdirectory (highest) &rarr; project root &rarr; global (lowest). More specific files supplement and override less specific ones, but all are loaded.</div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="quiz-q" id="q5">
+      <h4>Q5. An application processes thousands of invoices daily using the same system prompt and few-shot examples. Only the invoice content changes. Which technique best reduces API costs?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q5','wrong')"><strong>A.</strong> Reduce the number of few-shot examples</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q5','correct')"><strong>B.</strong> Use prompt caching to cache the static prefix</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q5','wrong')"><strong>C.</strong> Switch to a smaller model</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q5','wrong')"><strong>D.</strong> Use RAG to retrieve relevant examples dynamically</div>
+      <div class="quiz-explain" id="q5-explain"><strong>B is correct.</strong> Prompt caching caches the static system prompt and few-shot examples, reducing costs by ~90% on those cached tokens. Since thousands of invoices share the same prefix, this is the most impactful optimization.</div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="quiz-q" id="q6">
+      <h4>Q6. A developer wants to build an agent that refactors a large codebase. The specific files and changes needed are not known upfront. Which pattern is most appropriate?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q6','wrong')"><strong>A.</strong> Prompt Chaining</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q6','wrong')"><strong>B.</strong> Parallelization</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q6','correct')"><strong>C.</strong> Orchestrator-Workers</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q6','wrong')"><strong>D.</strong> Evaluator-Optimizer</div>
+      <div class="quiz-explain" id="q6-explain"><strong>C is correct.</strong> Orchestrator-Workers is the right pattern when the task breakdown is not known upfront. The orchestrator analyzes the codebase first, then dynamically creates and delegates to workers. Parallelization requires knowing the subtasks upfront.</div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="quiz-q" id="q7">
+      <h4>Q7. What are the three primitive types exposed by an MCP server? (Select all that apply)</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q7','correct')"><strong>A.</strong> Tools</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q7','correct')"><strong>B.</strong> Resources</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q7','wrong')"><strong>C.</strong> Endpoints</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q7','correct')"><strong>D.</strong> Prompts</div>
+      <div class="quiz-explain" id="q7-explain"><strong>A, B, and D are correct.</strong> MCP servers expose three primitives: Tools (executable functions), Resources (readable data), and Prompts (reusable templates). "Endpoints" is not an MCP primitive.</div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="quiz-q" id="q8">
+      <h4>Q8. A team is building a content generation system where quality is critical. They want Claude to generate blog posts, then have another instance evaluate quality and provide feedback for revision. Which pattern fits best?</h4>
+      <div class="quiz-option" onclick="checkAnswer(this,'q8','wrong')"><strong>A.</strong> Routing</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q8','wrong')"><strong>B.</strong> Prompt Chaining</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q8','correct')"><strong>C.</strong> Evaluator-Optimizer</div>
+      <div class="quiz-option" onclick="checkAnswer(this,'q8','wrong')"><strong>D.</strong> Parallelization</div>
+      <div class="quiz-explain" id="q8-explain"><strong>C is correct.</strong> Evaluator-Optimizer creates a feedback loop: Generator produces content &rarr; Evaluator critiques it &rarr; Generator revises based on feedback. This loop continues until quality thresholds are met. It trades latency for quality.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 12: Study Matrix -->
+<section class="section" id="study-matrix">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">12</span>
+    <h2>Priority Study Matrix</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="priority-row">
+      <div class="priority-badge p1">P1</div>
+      <div>
+        <strong>Agentic Patterns &amp; Orchestration</strong>
+        <div style="font-size:.85rem;color:var(--text-muted)">4&ndash;5 hours | 27% of exam | Biggest gap</div>
+        <div style="font-size:.82rem;color:var(--text-dim);margin-top:.25rem">All 6 patterns, when to use/not use agents, orchestrator vs parallelization, HITL, safeguards</div>
+      </div>
+    </div>
+
+    <div class="priority-row">
+      <div class="priority-badge p2">P2</div>
+      <div>
+        <strong>Prompt Engineering &amp; Structured Output</strong>
+        <div style="font-size:.85rem;color:var(--text-muted)">3&ndash;4 hours | 20% of exam | Know patterns by name</div>
+        <div style="font-size:.82rem;color:var(--text-dim);margin-top:.25rem">Few-shot, CoT, JSON mode, tool_use extraction, prefilling, XML tags, system prompt design</div>
+      </div>
+    </div>
+
+    <div class="priority-row">
+      <div class="priority-badge p3">P3</div>
+      <div>
+        <strong>Context Management &amp; Reliability</strong>
+        <div style="font-size:.85rem;color:var(--text-muted)">2&ndash;3 hours | 15% of exam | Formalize intuition</div>
+        <div style="font-size:.82rem;color:var(--text-dim);margin-top:.25rem">RAG architecture, prompt caching, token strategies, guardrails, retry, fallback, monitoring</div>
+      </div>
+    </div>
+
+    <div class="priority-row">
+      <div class="priority-badge p4">P4</div>
+      <div>
+        <strong>MCP Specification</strong>
+        <div style="font-size:.85rem;color:var(--text-muted)">1&ndash;2 hours | 18% of exam | Learn formal spec</div>
+        <div style="font-size:.82rem;color:var(--text-dim);margin-top:.25rem">3 primitives, architecture layers, transport types, tool design best practices, anti-patterns</div>
+      </div>
+    </div>
+
+    <div class="priority-row">
+      <div class="priority-badge p5">P5</div>
+      <div>
+        <strong>Claude Code Configuration</strong>
+        <div style="font-size:.85rem;color:var(--text-muted)">30 minutes | 20% of exam | Already strong</div>
+        <div style="font-size:.82rem;color:var(--text-dim);margin-top:.25rem">Quick review of config hierarchy order, hook names, permission modes. You use this daily.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem">
+      <h3>Total Study Time: ~12&ndash;15 hours</h3>
+      <p>Spread across 2 weeks = roughly <strong>1 hour per day</strong>. Highly achievable alongside regular work.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 13: 2-Week Study Plan -->
+<section class="section" id="study-plan">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">13</span>
+    <h2>2-Week Study Plan</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <h3>Week 1: Build the Foundation</h3>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 1 (Mon) &mdash; Agentic Patterns Overview</div>
+        <div class="cal-day-time">~1.5 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Read the Anthropic "Building Effective Agents" guide end to end</li>
+        <li>Memorize the 6 pattern names and one-sentence definitions</li>
+        <li>Draw the flow diagram for each pattern from memory</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 2 (Tue) &mdash; Deep Dive: Chaining, Routing, Parallelization</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Study the first 3 patterns in detail with examples</li>
+        <li>Understand: when would you chain vs. parallelize?</li>
+        <li>Write out 2 scenarios for each pattern</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 3 (Wed) &mdash; Deep Dive: Orchestrator, Evaluator, Autonomous</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Study the last 3 patterns in detail</li>
+        <li>Critical: know the difference between Orchestrator-Workers and Parallelization</li>
+        <li>List safeguards for Autonomous Agents (exit conditions, token budgets, HITL)</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 4 (Thu) &mdash; "When NOT to Use Agents"</div>
+        <div class="cal-day-time">~45 min</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Study the "Keep It Simple" principle</li>
+        <li>Practice: given a scenario, choose the SIMPLEST viable pattern</li>
+        <li>Review common exam traps: over-engineering answers</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 5 (Fri) &mdash; Prompt Engineering Patterns</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Study: Few-shot (2-5 examples), Chain-of-Thought, System Prompt structure</li>
+        <li>Learn pattern names and when to apply each</li>
+        <li>Practice writing a system prompt with proper structure</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 6 (Sat) &mdash; Structured Output Techniques</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>JSON mode, tool_use for extraction, XML tags, prefilling</li>
+        <li>Know which technique is best for each scenario</li>
+        <li>Hands-on: try each technique in the API playground</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 7 (Sun) &mdash; Review &amp; Practice Questions</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Review all 6 agentic patterns from memory</li>
+        <li>Do practice questions for Domains 1 and 4</li>
+        <li>Identify and note any weak spots</li>
+      </ul>
+    </div>
+
+    <h3 style="margin-top:1.5rem">Week 2: Fill Gaps &amp; Sharpen</h3>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 8 (Mon) &mdash; MCP Specification</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Study: 3 primitives (Tools, Resources, Prompts)</li>
+        <li>Architecture: Host &rarr; Client &rarr; Server &rarr; External System</li>
+        <li>Transport: stdio vs SSE/HTTP &mdash; when to use each</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 9 (Tue) &mdash; Tool Design &amp; Anti-Patterns</div>
+        <div class="cal-day-time">~45 min</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Tool design best practices: atomic, descriptions, schemas, errors</li>
+        <li>Tool calling flow (5 steps) and tool choice modes</li>
+        <li>Memorize the 5 anti-patterns (god tools, no descriptions, etc.)</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 10 (Wed) &mdash; Context Management &amp; RAG</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>5 context strategies: summarization, sliding window, RAG, caching, budgeting</li>
+        <li>RAG architecture: chunk &rarr; embed &rarr; retrieve &rarr; inject &rarr; generate</li>
+        <li>Prompt caching: how it works, ~90% cost reduction</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 11 (Thu) &mdash; Reliability &amp; Guardrails</div>
+        <div class="cal-day-time">~45 min</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Retry with backoff, fallback chains, HITL, monitoring</li>
+        <li>Input/output guardrails, confidence thresholds</li>
+        <li>Observability: tokens, latency, error rates, cost</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 12 (Fri) &mdash; Claude Code Quick Review</div>
+        <div class="cal-day-time">~30 min</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Config hierarchy: env vars &rarr; local &rarr; project &rarr; global</li>
+        <li>CLAUDE.md hierarchy: subdirectory &rarr; project root &rarr; global</li>
+        <li>4 hook types: PreToolUse, PostToolUse, Stop, Notification</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 13 (Sat) &mdash; Scenario Walkthrough</div>
+        <div class="cal-day-time">~1.5 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Walk through all 6 exam scenarios</li>
+        <li>For each: identify which patterns, tools, and concepts apply</li>
+        <li>Practice full-length sample questions under time pressure</li>
+      </ul>
+    </div>
+
+    <div class="cal-day">
+      <div class="cal-day-header">
+        <div class="cal-day-title">Day 14 (Sun) &mdash; Final Review &amp; Rest</div>
+        <div class="cal-day-time">~1 hr</div>
+      </div>
+      <ul class="cal-tasks">
+        <li>Quick pass through all 5 domains &mdash; one paragraph summary each</li>
+        <li>Review any flagged weak spots from the week</li>
+        <li>Light review only &mdash; no cramming. Rest well before exam day.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 14: Exam Day Strategy -->
+<section class="section" id="exam-day">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">14</span>
+    <h2>Exam Day Strategy</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Before the Exam</h3>
+        <ul>
+          <li>Get 7-8 hours of sleep the night before</li>
+          <li>Quick 15-minute review of the 6 agentic patterns</li>
+          <li>Have water and a quiet environment ready</li>
+          <li>Test your internet connection and browser</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>During the Exam</h3>
+        <ul>
+          <li><strong>Read scenarios carefully the first time</strong> &mdash; multiple questions reference each</li>
+          <li>Answer every question &mdash; no penalty for guessing</li>
+          <li>Flag uncertain questions and return to them</li>
+          <li>Manage time: don't spend more than 2 minutes per question</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1.25rem">Common Traps to Avoid</h3>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Trap 1: Over-Engineering</div>
+      <p>The question describes a simple task. One answer option proposes a complex multi-agent system. <strong>The correct answer is almost always the simpler approach.</strong> Remember: "Keep It Simple" is a testable principle.</p>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Trap 2: Orchestrator vs. Parallelization</div>
+      <p>Both use multiple workers. The key distinction: in Parallelization, workers are defined <strong>upfront</strong>. In Orchestrator-Workers, the orchestrator decides <strong>at runtime</strong>. If the question says "the breakdown is not known ahead of time" = Orchestrator.</p>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Trap 3: Confusing MCP Primitives</div>
+      <p>Tools execute actions. Resources provide data (read-only). Prompts are templates. If the question asks about reading data without side effects = Resource, not Tool.</p>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Trap 4: Config Hierarchy Direction</div>
+      <p>More specific overrides less specific. Environment variables beat everything. Local settings beat project settings. Subdirectory CLAUDE.md beats project root CLAUDE.md. Don't get the direction backwards.</p>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Trap 5: "Best" vs. "Acceptable"</div>
+      <p>Multiple answers may work, but the exam asks for the <strong>best</strong> or <strong>most appropriate</strong> option. Look for the answer that is simplest, most reliable, and most aligned with documented best practices.</p>
+    </div>
+
+    <div class="tip tip-red">
+      <div class="tip-title">Trap 6: Autonomous Agent as Default</div>
+      <p>Autonomous agents are powerful but risky. The exam tests whether you know they should be the <strong>last resort</strong>, not the first choice. Always check if a simpler pattern works first.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 15: Resources -->
+<section class="section" id="resources">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-num">15</span>
+    <h2>Key Resources</h2>
+    <button class="section-toggle" aria-label="Toggle section">&#9662;</button>
+  </div>
+  <div class="section-body">
+
+    <div class="card">
+      <h3>Anthropic Official Documentation</h3>
+      <ul>
+        <li><a href="https://docs.anthropic.com">docs.anthropic.com</a> &mdash; Claude API docs, guides, and reference</li>
+        <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/agents">Building Effective Agents</a> &mdash; The definitive guide to agentic patterns (Domain 1 source material)</li>
+        <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering">Prompt Engineering Guide</a> &mdash; Official prompt engineering techniques</li>
+        <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/tool-use">Tool Use Documentation</a> &mdash; Tool calling, schemas, best practices</li>
+        <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching">Prompt Caching Guide</a> &mdash; Caching mechanics and cost savings</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>MCP (Model Context Protocol)</h3>
+      <ul>
+        <li><a href="https://modelcontextprotocol.io">modelcontextprotocol.io</a> &mdash; Official MCP specification</li>
+        <li><a href="https://modelcontextprotocol.io/docs/concepts/architecture">MCP Architecture</a> &mdash; Host, Client, Server, Transport</li>
+        <li><a href="https://modelcontextprotocol.io/docs/concepts/tools">MCP Tools</a> &mdash; Tool primitive specification</li>
+        <li><a href="https://modelcontextprotocol.io/docs/concepts/resources">MCP Resources</a> &mdash; Resource primitive specification</li>
+        <li><a href="https://modelcontextprotocol.io/docs/concepts/prompts">MCP Prompts</a> &mdash; Prompt primitive specification</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Claude Code</h3>
+      <ul>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code Documentation</a> &mdash; Configuration, hooks, permissions</li>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code/settings">Settings Reference</a> &mdash; Config file hierarchy and options</li>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code/claude-md">CLAUDE.md Guide</a> &mdash; How CLAUDE.md files work</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Anthropic Cookbook &amp; Examples</h3>
+      <ul>
+        <li><a href="https://github.com/anthropics/anthropic-cookbook">anthropic-cookbook</a> &mdash; Code examples for all API features</li>
+        <li><a href="https://github.com/anthropics/courses">Anthropic Courses</a> &mdash; Free courses on prompt engineering and tool use</li>
+        <li><a href="https://docs.anthropic.com/en/docs/about-claude/models">Model Comparison</a> &mdash; Opus, Sonnet, Haiku capabilities and pricing</li>
+      </ul>
+    </div>
+
+    <div class="tip tip-green">
+      <div class="tip-title">Priority Reading Order</div>
+      <ol>
+        <li>"Building Effective Agents" guide (covers 27% of exam)</li>
+        <li>MCP specification &mdash; Architecture + 3 Primitives pages</li>
+        <li>Prompt Engineering guide + Tool Use docs</li>
+        <li>Claude Code settings and CLAUDE.md reference</li>
+        <li>Prompt Caching guide</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<div style="text-align:center;padding:2rem 0;border-top:1px solid var(--border);margin-top:2rem;color:var(--text-dim);font-size:.82rem">
+  <p>Claude Certified Architect &mdash; Foundations Exam Study Guide</p>
+  <p style="margin-top:.25rem">Built for Chris Fun. Updated March 2026.</p>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+// Sidebar toggle
+const hamburger=document.getElementById('hamburger');
+const sidebar=document.getElementById('sidebar');
+const overlay=document.getElementById('overlay');
+const sidebarClose=document.getElementById('sidebarClose');
+function openSidebar(){sidebar.classList.add('open');overlay.classList.add('active');hamburger.classList.add('active')}
+function closeSidebar(){sidebar.classList.remove('open');overlay.classList.remove('active');hamburger.classList.remove('active')}
+hamburger.addEventListener('click',()=>{sidebar.classList.contains('open')?closeSidebar():openSidebar()});
+overlay.addEventListener('click',closeSidebar);
+sidebarClose.addEventListener('click',closeSidebar);
+
+// Close sidebar on nav link click (mobile)
+document.querySelectorAll('.nav-link').forEach(link=>{
+  link.addEventListener('click',()=>{if(window.innerWidth<1024)closeSidebar()});
+});
+
+// Active nav link
+const sections=document.querySelectorAll('.section');
+const navLinks=document.querySelectorAll('.nav-link');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const id=entry.target.id;
+      navLinks.forEach(l=>{
+        l.classList.toggle('active',l.getAttribute('href')==='#'+id);
+      });
+    }
+  });
+},{rootMargin:'-20% 0px -70% 0px'});
+sections.forEach(s=>observer.observe(s));
+
+// Section collapse
+function toggleSection(header){
+  const body=header.nextElementSibling;
+  const toggle=header.querySelector('.section-toggle');
+  body.classList.toggle('collapsed');
+  toggle.classList.toggle('collapsed');
+}
+
+// Progress bar
+window.addEventListener('scroll',()=>{
+  const scrollTop=document.documentElement.scrollTop||document.body.scrollTop;
+  const scrollHeight=document.documentElement.scrollHeight-document.documentElement.clientHeight;
+  const progress=scrollHeight>0?(scrollTop/scrollHeight)*100:0;
+  document.getElementById('progressFill').style.width=progress+'%';
+});
+
+// Quiz
+function checkAnswer(el,qId,result){
+  const q=document.getElementById(qId);
+  if(q.dataset.answered)return;
+  q.dataset.answered='true';
+  el.classList.add(result);
+  // Highlight correct answer if wrong was clicked
+  if(result==='wrong'){
+    q.querySelectorAll('.quiz-option').forEach(opt=>{
+      if(opt.getAttribute('onclick').includes("'correct'")){opt.classList.add('correct')}
+    });
+  }
+  document.getElementById(qId+'-explain').classList.add('show');
+}
+</script>
+</body>
+</html>
