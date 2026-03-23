@@ -2,16 +2,25 @@
 
 import { redirect } from 'next/navigation';
 import { verifyPassword, setSessionCookie, clearSessionCookie } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { z } from 'zod';
+import type { User } from '@/types/database';
 
 const LoginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  username: z.string().min(1, 'Username or email is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
 export type LoginState =
   | { error: string }
   | undefined;
+
+async function findUserByEmail(email: string): Promise<User | null> {
+  const snapshot = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  return { id: doc.id, ...doc.data() } as User;
+}
 
 export async function loginAction(
   _prevState: LoginState,
@@ -28,22 +37,31 @@ export async function loginAction(
 
   const { username, password } = parsed.data;
 
+  // Try env-var admin login first (backwards compatible)
   const expectedUsername = process.env.ADMIN_USERNAME;
   const expectedHash = process.env.ADMIN_PASSWORD_HASH;
 
-  if (!expectedUsername || !expectedHash) {
-    return { error: 'Server configuration error. Please contact admin.' };
+  if (expectedUsername && expectedHash) {
+    const usernameMatch = username === expectedUsername;
+    const passwordMatch = usernameMatch ? await verifyPassword(password, expectedHash) : false;
+
+    if (usernameMatch && passwordMatch) {
+      await setSessionCookie(username, 'admin', 'env-admin');
+      redirect('/');
+    }
   }
 
-  const usernameMatch = username === expectedUsername;
-  const passwordMatch = await verifyPassword(password, expectedHash);
-
-  if (!usernameMatch || !passwordMatch) {
-    return { error: 'Invalid username or password.' };
+  // Try Firestore user login (username field is email)
+  const user = await findUserByEmail(username);
+  if (user) {
+    const passwordMatch = await verifyPassword(password, user.password_hash);
+    if (passwordMatch) {
+      await setSessionCookie(user.name, user.role, user.id);
+      redirect('/');
+    }
   }
 
-  await setSessionCookie(username);
-  redirect('/');
+  return { error: 'Invalid username or password.' };
 }
 
 export async function logoutAction(): Promise<void> {

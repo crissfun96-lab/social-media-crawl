@@ -13,13 +13,14 @@ import { Input } from '@/components/ui/input';
 import { LoadingPage } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useFetch } from '@/lib/hooks';
+import { EngagementCardList } from '@/components/creators/engagement-card';
 import {
   formatNumber,
   getPlatformLabel,
   getOutreachStatusConfig,
   OUTREACH_STATUS_OPTIONS,
 } from '@/lib/constants';
-import type { Creator, PostWithCreator } from '@/types/database';
+import type { Creator, PostWithCreator, BrandEngagement, EngagementStatus, Brand } from '@/types/database';
 
 interface CreatorDetailPageProps {
   readonly params: Promise<{ id: string }>;
@@ -30,6 +31,7 @@ export default function CreatorDetailPage({ params }: CreatorDetailPageProps) {
   const router = useRouter();
   const { data: creator, loading, error, refetch } = useFetch<Creator>(`/api/creators/${id}`);
   const { data: posts } = useFetch<readonly PostWithCreator[]>(`/api/posts?creator_id=${id}`);
+  const { data: engagements, refetch: refetchEngagements } = useFetch<readonly BrandEngagement[]>(`/api/engagements?creator_id=${id}`);
 
   const [editingStatus, setEditingStatus] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -77,6 +79,36 @@ export default function CreatorDetailPage({ params }: CreatorDetailPageProps) {
       alert(`Delete failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [id, router]);
+
+  const handleEngagementStatusChange = useCallback(async (engagementId: string, status: EngagementStatus) => {
+    await fetch(`/api/engagements/${engagementId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    refetchEngagements();
+  }, [refetchEngagements]);
+
+  const handleShareToBrand = useCallback(async (engagement: BrandEngagement, targetBrand: Brand) => {
+    const res = await fetch('/api/engagements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        creator_id: engagement.creator_id,
+        brand: targetBrand,
+        status: 'prospect',
+        pic: engagement.pic,
+        rate_rm: engagement.rate_rm,
+        contact_number: engagement.contact_number,
+      }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      refetchEngagements();
+    } else {
+      alert(`Share failed: ${json.error}`);
+    }
+  }, [refetchEngagements]);
 
   if (loading) return <LoadingPage />;
 
@@ -242,8 +274,22 @@ export default function CreatorDetailPage({ params }: CreatorDetailPageProps) {
           </Card>
         </div>
 
-        {/* Right column - Posts */}
-        <div className="lg:col-span-2">
+        {/* Right column - Engagements + Posts */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Brand Engagements */}
+          <Card>
+            <CardHeader
+              title="Brand Engagements"
+              subtitle={`${engagements?.length ?? 0} engagements`}
+            />
+            <EngagementCardList
+              engagements={(engagements ?? []) as ReadonlyArray<BrandEngagement & { readonly creator_name?: string }>}
+              onStatusChange={handleEngagementStatusChange}
+              onShareToBrand={handleShareToBrand}
+            />
+          </Card>
+
+          {/* Posts */}
           <Card>
             <CardHeader
               title="Tracked Posts"

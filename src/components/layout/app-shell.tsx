@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './sidebar';
 
-const AUTH_PATHS = ['/login'];
+const AUTH_PATHS = ['/login', '/register'];
 
 interface AppShellProps {
   readonly children: React.ReactNode;

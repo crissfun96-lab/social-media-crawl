@@ -1,9 +1,17 @@
+import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
+import type { UserRole } from '@/types/database';
 
 const SESSION_COOKIE = 'smc_session';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
+
+export interface SessionData {
+  readonly username: string;
+  readonly role: UserRole;
+  readonly userId: string;
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -19,43 +27,58 @@ function getAuthSecret(): string {
   return secret;
 }
 
-export function createSessionToken(username: string): string {
+export function createSessionToken(username: string, role: UserRole = 'staff', userId: string = ''): string {
   const secret = getAuthSecret();
-  const payload = JSON.stringify({ username, exp: Date.now() + SESSION_MAX_AGE * 1000 });
-  // Simple HMAC-like token: base64(payload).base64(hmac)
-  // For production use a proper JWT library, but this is secure enough for a single-user admin app
-  const { createHmac } = require('crypto') as typeof import('crypto');
+  const payload = JSON.stringify({ username, role, userId, exp: Date.now() + SESSION_MAX_AGE * 1000 });
+
   const sig = createHmac('sha256', secret).update(payload).digest('base64url');
   return `${Buffer.from(payload).toString('base64url')}.${sig}`;
 }
 
-export function verifySessionToken(token: string): { username: string } | null {
+export function verifySessionToken(token: string): SessionData | null {
   try {
     const secret = getAuthSecret();
     const [payloadB64, sig] = token.split('.');
     if (!payloadB64 || !sig) return null;
 
-    const { createHmac } = require('crypto') as typeof import('crypto');
+  
     const expectedSig = createHmac('sha256', secret)
       .update(Buffer.from(payloadB64, 'base64url').toString())
       .digest('base64url');
 
-    if (sig !== expectedSig) return null;
+    const sigBuf = Buffer.from(sig);
+    const expectedBuf = Buffer.from(expectedSig);
+    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) return null;
 
     const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString()) as {
       username: string;
+      role?: UserRole;
+      userId?: string;
       exp: number;
     };
 
     if (payload.exp < Date.now()) return null;
 
-    return { username: payload.username };
+    return {
+      username: payload.username,
+      role: payload.role ?? 'staff',
+      userId: payload.userId ?? '',
+    };
   } catch {
     return null;
   }
 }
 
+/** Get session (backwards-compatible: returns {username} at minimum) */
 export async function getSession(): Promise<{ username: string } | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  return verifySessionToken(token);
+}
+
+/** Get session with full role info */
+export async function getSessionWithRole(): Promise<SessionData | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -70,9 +93,32 @@ export async function requireAuth(): Promise<{ username: string }> {
   return session;
 }
 
-export async function setSessionCookie(username: string): Promise<void> {
+/** Require auth and return full session with role */
+export async function requireAuthWithRole(): Promise<SessionData> {
+  const session = await getSessionWithRole();
+  if (!session) {
+    redirect('/login');
+  }
+  return session;
+}
+
+/** Require admin role — redirects to / if not admin */
+export async function requireAdmin(): Promise<SessionData> {
+  const session = await requireAuthWithRole();
+  if (session.role !== 'admin') {
+    redirect('/');
+  }
+  return session;
+}
+
+/** Check if session belongs to an admin */
+export function isAdmin(session: SessionData | null): boolean {
+  return session?.role === 'admin';
+}
+
+export async function setSessionCookie(username: string, role: UserRole = 'staff', userId: string = ''): Promise<void> {
   const cookieStore = await cookies();
-  const token = createSessionToken(username);
+  const token = createSessionToken(username, role, userId);
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

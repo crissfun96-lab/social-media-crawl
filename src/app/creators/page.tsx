@@ -12,9 +12,9 @@ import { Pagination } from '@/components/creators/pagination';
 import { Button } from '@/components/ui/button';
 import { LoadingPage } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useDebounce } from '@/lib/hooks';
+import { useDebounce, useFetch } from '@/lib/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import type { Creator, OutreachStatus } from '@/types/database';
+import type { Creator, OutreachStatus, BrandEngagement } from '@/types/database';
 
 export default function CreatorsPage() {
   const [search, setSearch] = useState('');
@@ -22,6 +22,8 @@ export default function CreatorsPage() {
   const [outreachStatus, setOutreachStatus] = useState('');
   const [hasPostedAboutUs, setHasPostedAboutUs] = useState('');
   const [location, setLocation] = useState('');
+  const [brand, setBrand] = useState('');
+  const [pic, setPic] = useState('');
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -41,6 +43,29 @@ export default function CreatorsPage() {
   if (debouncedLocation) queryParams.set('location', debouncedLocation);
   queryParams.set('sort_by', sortField);
   queryParams.set('sort_order', sortOrder);
+
+  // Build engagements query for filtering
+  const engagementParams = new URLSearchParams();
+  engagementParams.set('per_page', '100');
+  if (brand) engagementParams.set('brand', brand);
+  if (pic) engagementParams.set('pic', pic);
+  const engagementUrl = (brand || pic) ? `/api/engagements?${engagementParams.toString()}` : null;
+  const { data: engagements } = useFetch<readonly BrandEngagement[]>(engagementUrl);
+
+  // When brand/PIC filter is active, we need to filter creators by their engagement creator_ids
+  const engagementCreatorIds = engagements
+    ? new Set(engagements.map(e => e.creator_id))
+    : null;
+
+  // Build a map of creator_id -> latest engagement for badge display
+  const { data: allEngagements } = useFetch<readonly BrandEngagement[]>('/api/engagements?per_page=100');
+  const engagementsByCreator = new Map<string, readonly BrandEngagement[]>();
+  if (allEngagements) {
+    for (const eng of allEngagements) {
+      const existing = engagementsByCreator.get(eng.creator_id) ?? [];
+      engagementsByCreator.set(eng.creator_id, [...existing, eng]);
+    }
+  }
 
   const { data: creators, loading: creatorsLoading, error: creatorsError, refetch: creatorsRefetch } = useCustomCreatorsFetch(
     `/api/creators?${queryParams.toString()}`
@@ -223,6 +248,10 @@ export default function CreatorsPage() {
         onHasPostedChange={(v) => { setHasPostedAboutUs(v); setPage(1); }}
         location={location}
         onLocationChange={(v) => { setLocation(v); setPage(1); }}
+        brand={brand}
+        onBrandChange={(v) => { setBrand(v); setPage(1); }}
+        pic={pic}
+        onPicChange={(v) => { setPic(v); setPage(1); }}
       />
 
       <BulkActions
@@ -234,8 +263,11 @@ export default function CreatorsPage() {
       {creators && creators.items.length > 0 ? (
         <>
           <CreatorTable
-            creators={creators.items}
+            creators={engagementCreatorIds
+              ? creators.items.filter(c => engagementCreatorIds.has(c.id))
+              : creators.items}
             selectedIds={selectedIds}
+            engagementsByCreator={engagementsByCreator}
             onToggleSelect={handleToggleSelect}
             onToggleSelectAll={handleToggleSelectAll}
             allSelected={creators.items.length > 0 && selectedIds.size === creators.items.length}

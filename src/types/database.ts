@@ -1,5 +1,7 @@
 export type Platform = 'xhs' | 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'twitter';
 
+export type Brand = 'songhwa' | 'byondwalls' | 'hwc_coffee' | 'decore';
+
 export type OutreachStatus =
   | 'not_contacted'
   | 'contacted'
@@ -7,6 +9,37 @@ export type OutreachStatus =
   | 'agreed'
   | 'posted'
   | 'declined';
+
+export type EngagementStatus =
+  | 'prospect'
+  | 'contacted'
+  | 'negotiating'
+  | 'confirmed'
+  | 'visited'
+  | 'posted'
+  | 'paid'
+  | 'skipped';
+
+export interface BrandEngagement {
+  readonly id: string;
+  readonly creator_id: string;
+  readonly brand: Brand;
+  readonly status: EngagementStatus;
+  readonly pic: string | null;
+  readonly rate_rm: number | null;
+  readonly payout_rm: number | null;
+  readonly food_credit_rm: number | null;
+  readonly proceed_date: string | null;
+  readonly month: string | null;
+  readonly contact_number: string | null;
+  readonly posted_link: string | null;
+  readonly likes: number | null;
+  readonly collects: number | null;
+  readonly paid_status: string | null;
+  readonly notes: string | null;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
 
 export type CampaignStatus = 'planning' | 'active' | 'completed';
 
@@ -100,6 +133,20 @@ export interface DashboardStats {
     readonly outreach_status: string;
     readonly profile_url: string;
   }>;
+}
+
+export type UserRole = 'admin' | 'staff';
+
+export interface User {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+  readonly password_hash: string;
+  readonly role: UserRole;
+  readonly assigned_brands: readonly Brand[];
+  readonly assigned_creators: readonly string[];
+  readonly created_at: string;
+  readonly updated_at: string;
 }
 
 export interface CreatorFilters {

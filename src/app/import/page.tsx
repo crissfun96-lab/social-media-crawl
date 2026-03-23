@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { CsvUpload } from '@/components/import/csv-upload';
 
 type ImportType = 'creators' | 'posts';
 type ImportFormat = 'json' | 'csv';
@@ -229,6 +230,8 @@ export default function ImportPage() {
         </div>
 
         <div className="space-y-4">
+          <CsvUpload onImportComplete={() => {}} />
+
           <Card>
             <CardHeader title="API Endpoints" />
             <div className="space-y-3">
@@ -243,6 +246,12 @@ export default function ImportPage() {
                   POST /api/import/posts
                 </code>
                 <p className="text-xs text-zinc-500 mt-1">Bulk import posts. Body: JSON array of post objects.</p>
+              </div>
+              <div>
+                <code className="text-xs text-indigo-400 bg-zinc-800 px-2 py-1 rounded">
+                  POST /api/import/engagements
+                </code>
+                <p className="text-xs text-zinc-500 mt-1">Bulk import brand engagements. Body: JSON array or CSV upload.</p>
               </div>
             </div>
           </Card>

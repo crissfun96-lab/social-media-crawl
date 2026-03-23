@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import { loginAction } from '@/app/actions/auth';
 import type { LoginState } from '@/app/actions/auth';
+import Link from 'next/link';
 
 export function LoginForm() {
   const [state, action, pending] = useActionState<LoginState, FormData>(loginAction, undefined);
@@ -56,8 +57,15 @@ export function LoginForm() {
           text-white font-medium rounded-lg px-4 py-3 text-sm transition-colors min-h-[44px]
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        {pending ? 'Signing in…' : 'Sign in'}
+        {pending ? 'Signing in...' : 'Sign in'}
       </button>
+
+      <p className="text-center text-sm text-zinc-400">
+        Don&apos;t have an account?{' '}
+        <Link href="/register" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+          Register
+        </Link>
+      </p>
     </form>
   );
 }

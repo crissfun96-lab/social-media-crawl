@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { PLATFORM_OPTIONS, OUTREACH_STATUS_OPTIONS } from '@/lib/constants';
+import { PLATFORM_OPTIONS, OUTREACH_STATUS_OPTIONS, BRAND_OPTIONS, PIC_OPTIONS } from '@/lib/constants';
 
 interface CreatorFiltersProps {
   readonly search: string;
@@ -16,6 +16,10 @@ interface CreatorFiltersProps {
   readonly onHasPostedChange: (value: string) => void;
   readonly location: string;
   readonly onLocationChange: (value: string) => void;
+  readonly brand?: string;
+  readonly onBrandChange?: (value: string) => void;
+  readonly pic?: string;
+  readonly onPicChange?: (value: string) => void;
 }
 
 export function CreatorFilters({
@@ -29,13 +33,29 @@ export function CreatorFilters({
   onHasPostedChange,
   location,
   onLocationChange,
+  brand,
+  onBrandChange,
+  pic,
+  onPicChange,
 }: CreatorFiltersProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const activeFilterCount = [platform, outreachStatus, hasPostedAboutUs, location].filter(Boolean).length;
+  const activeFilterCount = [platform, outreachStatus, hasPostedAboutUs, location, brand, pic].filter(Boolean).length;
 
   const filterGrid = (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <Select
+        options={BRAND_OPTIONS.map(b => ({ value: b.value, label: b.label }))}
+        placeholder="All Brands"
+        value={brand ?? ''}
+        onChange={(e) => onBrandChange?.(e.target.value)}
+      />
+      <Select
+        options={PIC_OPTIONS.map(p => ({ value: p.value, label: p.label }))}
+        placeholder="All PICs"
+        value={pic ?? ''}
+        onChange={(e) => onPicChange?.(e.target.value)}
+      />
       <Select
         options={PLATFORM_OPTIONS.map(p => ({ value: p.value, label: p.label }))}
         placeholder="All Platforms"
@@ -76,7 +96,7 @@ export function CreatorFilters({
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
-        {/* Filter toggle — mobile only */}
+        {/* Filter toggle -- mobile only */}
         <button
           onClick={() => setFiltersOpen(v => !v)}
           className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
