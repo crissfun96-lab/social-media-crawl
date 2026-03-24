@@ -10,7 +10,7 @@ import { BulkActions } from '@/components/creators/bulk-actions';
 import { CsvExport } from '@/components/creators/csv-export';
 import { Pagination } from '@/components/creators/pagination';
 import { Button } from '@/components/ui/button';
-import { LoadingPage } from '@/components/ui/spinner';
+import { LoadingPage, TableSkeleton } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useDebounce, useFetch } from '@/lib/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
@@ -45,11 +45,12 @@ export default function CreatorsPage() {
   queryParams.set('sort_order', sortOrder);
 
   // Build engagements query for filtering
+  const hasEngagementFilter = Boolean(brand || pic);
   const engagementParams = new URLSearchParams();
-  engagementParams.set('per_page', '100');
+  engagementParams.set('per_page', '500');
   if (brand) engagementParams.set('brand', brand);
   if (pic) engagementParams.set('pic', pic);
-  const engagementUrl = (brand || pic) ? `/api/engagements?${engagementParams.toString()}` : null;
+  const engagementUrl = hasEngagementFilter ? `/api/engagements?${engagementParams.toString()}` : null;
   const { data: engagements } = useFetch<readonly BrandEngagement[]>(engagementUrl);
 
   // When brand/PIC filter is active, we need to filter creators by their engagement creator_ids
@@ -57,11 +58,15 @@ export default function CreatorsPage() {
     ? new Set(engagements.map(e => e.creator_id))
     : null;
 
-  // Build a map of creator_id -> latest engagement for badge display
-  const { data: allEngagements } = useFetch<readonly BrandEngagement[]>('/api/engagements?per_page=100');
+  // Only fetch all engagements for badge display when not filtering (lazy load)
+  const allEngagementsUrl = hasEngagementFilter ? null : '/api/engagements?per_page=500';
+  const { data: allEngagements } = useFetch<readonly BrandEngagement[]>(allEngagementsUrl);
+
+  // Build a map of creator_id -> engagements for badge display
+  const engagementSource = hasEngagementFilter ? engagements : allEngagements;
   const engagementsByCreator = new Map<string, readonly BrandEngagement[]>();
-  if (allEngagements) {
-    for (const eng of allEngagements) {
+  if (engagementSource) {
+    for (const eng of engagementSource) {
       const existing = engagementsByCreator.get(eng.creator_id) ?? [];
       engagementsByCreator.set(eng.creator_id, [...existing, eng]);
     }
@@ -199,7 +204,7 @@ export default function CreatorsPage() {
     }
   }, [creatorsRefetch]);
 
-  if (creatorsLoading) return <LoadingPage />;
+  if (creatorsLoading && !creators) return <LoadingPage />;
 
   if (creatorsError) {
     return (

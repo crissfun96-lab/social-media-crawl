@@ -30,3 +30,45 @@ export function LoadingPage() {
     </div>
   );
 }
+
+export function TableSkeleton({ rows = 10 }: { readonly rows?: number }) {
+  return (
+    <div className="space-y-3 animate-pulse">
+      {/* Header skeleton */}
+      <div className="h-10 bg-zinc-800 rounded-lg" />
+      {/* Row skeletons */}
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="flex items-center gap-4 h-14 px-4">
+          <div className="h-4 w-4 bg-zinc-800 rounded" />
+          <div className="h-4 bg-zinc-800 rounded flex-1 max-w-[200px]" />
+          <div className="h-4 bg-zinc-800 rounded w-16 hidden md:block" />
+          <div className="h-4 bg-zinc-800 rounded w-16 hidden md:block" />
+          <div className="h-4 bg-zinc-800 rounded w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+      <div className="h-3 bg-zinc-800 rounded w-24 mb-3" />
+      <div className="h-8 bg-zinc-800 rounded w-16 mb-2" />
+      <div className="h-2 bg-zinc-800 rounded w-32" />
+    </div>
+  );
+}
+
+export function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-8 bg-zinc-800 rounded w-64" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -45,7 +45,7 @@ export const CONTENT_TYPES = [
   'other',
 ] as const;
 
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 50;
 
 export function getPlatformLabel(platform: string): string {
   return PLATFORM_OPTIONS.find(p => p.value === platform)?.label ?? platform;

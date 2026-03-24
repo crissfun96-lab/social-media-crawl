@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const params = parseSearchParams(request.url);
     const page = Math.max(1, parseInt(params.get('page') ?? '1', 10));
-    const perPage = Math.min(100, Math.max(1, parseInt(params.get('per_page') ?? String(DEFAULT_PAGE_SIZE), 10)));
+    const perPage = Math.min(500, Math.max(1, parseInt(params.get('per_page') ?? String(DEFAULT_PAGE_SIZE), 10)));
     const offset = (page - 1) * perPage;
 
     let query: FirebaseFirestore.Query = db().collection('brand_engagements');

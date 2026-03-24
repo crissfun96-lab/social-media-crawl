@@ -11,12 +11,15 @@ interface FetchState<T> {
 export function useFetch<T>(url: string | null) {
   const [state, setState] = useState<FetchState<T>>({
     data: null,
-    loading: true,
+    loading: url !== null,
     error: null,
   });
 
   const refetch = useCallback(async () => {
-    if (!url) return;
+    if (!url) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       const res = await fetch(url);

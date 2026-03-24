@@ -122,6 +122,10 @@ export interface DashboardStats {
   readonly totalCreators: number;
   readonly byPlatform: ReadonlyArray<{ readonly platform: string; readonly count: number }>;
   readonly byOutreachStatus: ReadonlyArray<{ readonly status: string; readonly count: number }>;
+  readonly byBrand?: ReadonlyArray<{ readonly brand: string; readonly creatorCount: number }>;
+  readonly picBreakdown?: ReadonlyArray<{ readonly pic: string; readonly count: number }>;
+  readonly totalSpent?: number;
+  readonly engagementPipeline?: ReadonlyArray<{ readonly status: string; readonly count: number }>;
   readonly recentPosts: readonly PostWithCreator[];
   readonly totalPosts: number;
   readonly postsAboutUs: number;
@@ -132,6 +136,13 @@ export interface DashboardStats {
     readonly likes_count?: number;
     readonly outreach_status: string;
     readonly profile_url: string;
+  }>;
+  readonly outreachFunnel?: ReadonlyArray<{
+    readonly status: string;
+    readonly label: string;
+    readonly color: string;
+    readonly count: number;
+    readonly percentage: number;
   }>;
 }
 

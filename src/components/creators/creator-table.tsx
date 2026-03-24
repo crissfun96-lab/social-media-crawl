@@ -58,6 +58,25 @@ function EngagementBadges({ engagements }: { readonly engagements: readonly Bran
   );
 }
 
+function getSourceLabel(tags: readonly string[], engagements: readonly BrandEngagement[]): { readonly label: string; readonly color: string } {
+  if (tags.includes('google-sheet')) {
+    const pic = engagements.length > 0 ? engagements[0].pic : null;
+    const picName = pic ? pic.charAt(0).toUpperCase() + pic.slice(1) : 'Sheet';
+    return { label: picName, color: 'bg-green-900 text-green-300' };
+  }
+  if (tags.includes('opencli')) {
+    return { label: 'XHS Scraper', color: 'bg-cyan-900 text-cyan-300' };
+  }
+  return { label: 'Manual', color: 'bg-zinc-700 text-zinc-400' };
+}
+
+function SourceBadge({ tags, engagements }: { readonly tags: readonly string[]; readonly engagements: readonly BrandEngagement[] }) {
+  const source = getSourceLabel(tags, engagements);
+  return (
+    <Badge className={source.color}>{source.label}</Badge>
+  );
+}
+
 function WhatsAppLink({ contactNumber }: { readonly contactNumber: string | null }) {
   if (!contactNumber) return null;
   const cleaned = contactNumber.replace(/[^0-9]/g, '');
@@ -152,6 +171,7 @@ export function CreatorTable({
               <SortHeader label="Profile L+S" field="profile_likes_saves" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden lg:table-cell" />
               <SortHeader label="Location" field="location" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="hidden lg:table-cell" />
               <SortHeader label="Status" field="outreach_status" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
+              <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Source</th>
               <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Brands</th>
               <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Tags</th>
             </tr>
@@ -252,6 +272,9 @@ export function CreatorTable({
                       onStatusChange={onStatusChange}
                       compact
                     />
+                  </td>
+                  <td className="py-3 px-2 hidden lg:table-cell">
+                    <SourceBadge tags={creator.tags} engagements={creatorEngagements} />
                   </td>
                   <td className="py-3 px-2 hidden lg:table-cell">
                     <EngagementBadges engagements={creatorEngagements} />
