@@ -20,6 +20,8 @@ interface CreatorFiltersProps {
   readonly onBrandChange?: (value: string) => void;
   readonly pic?: string;
   readonly onPicChange?: (value: string) => void;
+  readonly source?: string;
+  readonly onSourceChange?: (value: string) => void;
 }
 
 export function CreatorFilters({
@@ -37,10 +39,12 @@ export function CreatorFilters({
   onBrandChange,
   pic,
   onPicChange,
+  source,
+  onSourceChange,
 }: CreatorFiltersProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const activeFilterCount = [platform, outreachStatus, hasPostedAboutUs, location, brand, pic].filter(Boolean).length;
+  const activeFilterCount = [platform, outreachStatus, hasPostedAboutUs, location, brand, pic, source].filter(Boolean).length;
 
   const filterGrid = (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -77,10 +81,16 @@ export function CreatorFilters({
         value={hasPostedAboutUs}
         onChange={(e) => onHasPostedChange(e.target.value)}
       />
-      <Input
-        placeholder="Location (e.g. KL)"
-        value={location}
-        onChange={(e) => onLocationChange(e.target.value)}
+      <Select
+        options={[
+          { value: 'scraper', label: 'XHS Scraper' },
+          { value: 'liz', label: 'Found by Liz' },
+          { value: 'amber', label: 'Found by Amber' },
+          { value: 'manual', label: 'Manual' },
+        ]}
+        placeholder="All Sources"
+        value={source ?? ''}
+        onChange={(e) => onSourceChange?.(e.target.value)}
       />
     </div>
   );

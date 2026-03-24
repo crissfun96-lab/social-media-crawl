@@ -5,16 +5,16 @@ import Link from 'next/link';
 import Papa from 'papaparse';
 import { PageHeader } from '@/components/layout/page-header';
 import { CreatorFilters } from '@/components/creators/creator-filters';
-import { CreatorTable, type SortField, type SortOrder } from '@/components/creators/creator-table';
+import { CreatorTable, type SortField, type SortOrder, type BrandEngagementMap } from '@/components/creators/creator-table';
 import { BulkActions } from '@/components/creators/bulk-actions';
 import { CsvExport } from '@/components/creators/csv-export';
 import { Pagination } from '@/components/creators/pagination';
 import { Button } from '@/components/ui/button';
-import { LoadingPage, TableSkeleton } from '@/components/ui/spinner';
+import { LoadingPage } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useDebounce, useFetch } from '@/lib/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import type { Creator, OutreachStatus, BrandEngagement } from '@/types/database';
+import type { Creator, OutreachStatus, Brand, EngagementStatus, BrandEngagement } from '@/types/database';
 
 export default function CreatorsPage() {
   const [search, setSearch] = useState('');
@@ -24,10 +24,12 @@ export default function CreatorsPage() {
   const [location, setLocation] = useState('');
   const [brand, setBrand] = useState('');
   const [pic, setPic] = useState('');
+  const [source, setSource] = useState('');
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [engagementVersion, setEngagementVersion] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const debouncedSearch = useDebounce(search, 300);
@@ -44,33 +46,49 @@ export default function CreatorsPage() {
   queryParams.set('sort_by', sortField);
   queryParams.set('sort_order', sortOrder);
 
-  // Build engagements query for filtering
-  const hasEngagementFilter = Boolean(brand || pic);
-  const engagementParams = new URLSearchParams();
-  engagementParams.set('per_page', '500');
-  if (brand) engagementParams.set('brand', brand);
-  if (pic) engagementParams.set('pic', pic);
-  const engagementUrl = hasEngagementFilter ? `/api/engagements?${engagementParams.toString()}` : null;
-  const { data: engagements } = useFetch<readonly BrandEngagement[]>(engagementUrl);
+  // Always fetch all engagements (needed for brand status columns, PIC, source)
+  const engagementUrl = `/api/engagements?per_page=2000&_v=${engagementVersion}`;
+  const { data: allEngagementsRaw, refetch: refetchEngagements } = useFetch<readonly BrandEngagement[]>(engagementUrl);
 
-  // When brand/PIC filter is active, we need to filter creators by their engagement creator_ids
-  const engagementCreatorIds = engagements
-    ? new Set(engagements.map(e => e.creator_id))
-    : null;
+  // Build brand engagement map: creator_id -> { songhwa?: BrandEngagement, byondwalls?: BrandEngagement }
+  const engagementsByCreator = new Map<string, BrandEngagementMap>();
+  const allEngagementsByCreator = new Map<string, readonly BrandEngagement[]>();
 
-  // Only fetch all engagements for badge display when not filtering (lazy load)
-  const allEngagementsUrl = hasEngagementFilter ? null : '/api/engagements?per_page=500';
-  const { data: allEngagements } = useFetch<readonly BrandEngagement[]>(allEngagementsUrl);
-
-  // Build a map of creator_id -> engagements for badge display
-  const engagementSource = hasEngagementFilter ? engagements : allEngagements;
-  const engagementsByCreator = new Map<string, readonly BrandEngagement[]>();
-  if (engagementSource) {
-    for (const eng of engagementSource) {
-      const existing = engagementsByCreator.get(eng.creator_id) ?? [];
-      engagementsByCreator.set(eng.creator_id, [...existing, eng]);
+  if (allEngagementsRaw) {
+    const tempAll = new Map<string, BrandEngagement[]>();
+    for (const eng of allEngagementsRaw) {
+      // Build brand map
+      const existing = engagementsByCreator.get(eng.creator_id) ?? {};
+      if (eng.brand === 'songhwa' || eng.brand === 'byondwalls') {
+        const updated = { ...existing, [eng.brand]: eng };
+        engagementsByCreator.set(eng.creator_id, updated);
+      }
+      // Build flat list map
+      const list = tempAll.get(eng.creator_id) ?? [];
+      tempAll.set(eng.creator_id, [...list, eng]);
+    }
+    for (const [cid, list] of tempAll) {
+      allEngagementsByCreator.set(cid, list);
     }
   }
+
+  // PIC filter: find creator IDs where any engagement has matching pic
+  const picFilteredCreatorIds = pic
+    ? new Set(
+        (allEngagementsRaw ?? [])
+          .filter((e) => e.pic === pic)
+          .map((e) => e.creator_id),
+      )
+    : null;
+
+  // Brand filter: find creator IDs where engagement matches brand
+  const brandFilteredCreatorIds = brand
+    ? new Set(
+        (allEngagementsRaw ?? [])
+          .filter((e) => e.brand === brand)
+          .map((e) => e.creator_id),
+      )
+    : null;
 
   const { data: creators, loading: creatorsLoading, error: creatorsError, refetch: creatorsRefetch } = useCustomCreatorsFetch(
     `/api/creators?${queryParams.toString()}`
@@ -119,14 +137,44 @@ export default function CreatorsPage() {
     setPage(1);
   }, [sortField]);
 
-  const handleSingleStatusChange = useCallback(async (id: string, status: OutreachStatus) => {
-    await fetch(`/api/creators/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outreach_status: status }),
-    });
-    creatorsRefetch();
-  }, [creatorsRefetch]);
+  const handleBrandStatusChange = useCallback(async (
+    creatorId: string,
+    brandName: Brand,
+    status: EngagementStatus,
+    engagementId: string | null,
+  ) => {
+    if (engagementId) {
+      // Update existing engagement
+      const res = await fetch(`/api/engagements/${engagementId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        alert(`Failed to update status: ${json.error}`);
+        return;
+      }
+    } else {
+      // Create new engagement
+      const res = await fetch('/api/engagements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creator_id: creatorId,
+          brand: brandName,
+          status,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        alert(`Failed to create engagement: ${json.error}`);
+        return;
+      }
+    }
+    // Refresh engagements
+    setEngagementVersion((v) => v + 1);
+  }, []);
 
   const handleBulkAddTags = useCallback(async (tags: string[]) => {
     if (!creators) return;
@@ -154,7 +202,7 @@ export default function CreatorsPage() {
       header: true,
       complete: async (results) => {
         const rows = results.data as Record<string, string>[];
-        const creators = rows
+        const importCreators = rows
           .filter(row => row.name && row.platform && row.platform_id)
           .map(row => ({
             platform: row.platform || 'xhs',
@@ -175,7 +223,7 @@ export default function CreatorsPage() {
             tags: row.tags ? row.tags.split(',').map((t: string) => t.trim()) : [],
           }));
 
-        if (creators.length === 0) {
+        if (importCreators.length === 0) {
           alert('No valid rows found in CSV');
           return;
         }
@@ -183,7 +231,7 @@ export default function CreatorsPage() {
         const res = await fetch('/api/import/creators', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(creators),
+          body: JSON.stringify(importCreators),
         });
 
         const json = await res.json();
@@ -203,6 +251,37 @@ export default function CreatorsPage() {
       fileInputRef.current.value = '';
     }
   }, [creatorsRefetch]);
+
+  // Apply client-side filters for PIC, Brand, and Source (from engagements + tags)
+  const getFilteredCreators = (): readonly Creator[] => {
+    if (!creators) return [];
+    let items = creators.items;
+    if (picFilteredCreatorIds) {
+      items = items.filter((c) => picFilteredCreatorIds.has(c.id));
+    }
+    if (brandFilteredCreatorIds) {
+      items = items.filter((c) => brandFilteredCreatorIds.has(c.id));
+    }
+    if (source) {
+      items = items.filter((c) => {
+        const tags = c.tags ?? [];
+        if (source === 'scraper') return tags.includes('opencli');
+        if (source === 'liz') {
+          const engs = allEngagementsByCreator.get(c.id) ?? [];
+          return tags.includes('google-sheet') && engs.some(e => e.pic === 'liz');
+        }
+        if (source === 'amber') {
+          const engs = allEngagementsByCreator.get(c.id) ?? [];
+          return tags.includes('google-sheet') && engs.some(e => e.pic === 'amber');
+        }
+        if (source === 'manual') return !tags.includes('opencli') && !tags.includes('google-sheet');
+        return true;
+      });
+    }
+    return items;
+  };
+
+  const filteredCreators = getFilteredCreators();
 
   if (creatorsLoading && !creators) return <LoadingPage />;
 
@@ -257,6 +336,8 @@ export default function CreatorsPage() {
         onBrandChange={(v) => { setBrand(v); setPage(1); }}
         pic={pic}
         onPicChange={(v) => { setPic(v); setPage(1); }}
+        source={source}
+        onSourceChange={(v) => { setSource(v); setPage(1); }}
       />
 
       <BulkActions
@@ -265,26 +346,25 @@ export default function CreatorsPage() {
         onAddTags={handleBulkAddTags}
       />
 
-      {creators && creators.items.length > 0 ? (
+      {filteredCreators.length > 0 ? (
         <>
           <CreatorTable
-            creators={engagementCreatorIds
-              ? creators.items.filter(c => engagementCreatorIds.has(c.id))
-              : creators.items}
+            creators={filteredCreators}
             selectedIds={selectedIds}
             engagementsByCreator={engagementsByCreator}
+            allEngagements={allEngagementsByCreator}
             onToggleSelect={handleToggleSelect}
             onToggleSelectAll={handleToggleSelectAll}
-            allSelected={creators.items.length > 0 && selectedIds.size === creators.items.length}
-            onStatusChange={handleSingleStatusChange}
+            allSelected={filteredCreators.length > 0 && selectedIds.size === filteredCreators.length}
+            onBrandStatusChange={handleBrandStatusChange}
             sortField={sortField}
             sortOrder={sortOrder}
             onSort={handleSort}
           />
           <Pagination
-            page={creators.page}
-            perPage={creators.perPage}
-            total={creators.total}
+            page={creators?.page ?? 1}
+            perPage={creators?.perPage ?? DEFAULT_PAGE_SIZE}
+            total={creators?.total ?? 0}
             onPageChange={setPage}
           />
         </>

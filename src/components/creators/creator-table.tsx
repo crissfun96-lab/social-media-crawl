@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { formatNumber, getPlatformLabel, getCreatorTier, getBrandConfig, getEngagementStatusConfig } from '@/lib/constants';
-import { StatusSelect } from './status-select';
+import { formatNumber, getPlatformLabel, getCreatorTier } from '@/lib/constants';
+import { BrandStatusSelect } from './brand-status-select';
 import { CreatorCardList } from './creator-card';
-import type { Creator, OutreachStatus, BrandEngagement } from '@/types/database';
+import type { Creator, EngagementStatus, Brand, BrandEngagement } from '@/types/database';
 
 export type SortField = 'name' | 'follower_count' | 'outreach_status' | 'location' | 'likes_count' | 'profile_likes_saves' | 'created_at';
 export type SortOrder = 'asc' | 'desc';
@@ -36,45 +36,14 @@ function SortHeader({ label, field, currentSort, currentOrder, onSort, className
   );
 }
 
-function EngagementBadges({ engagements }: { readonly engagements: readonly BrandEngagement[] }) {
-  if (engagements.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1 mt-1">
-      {engagements.map(eng => {
-        const brandCfg = getBrandConfig(eng.brand);
-        const statusCfg = getEngagementStatusConfig(eng.status);
-        return (
-          <span
-            key={eng.id}
-            className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${brandCfg.color}`}
-            title={`${brandCfg.label}: ${statusCfg.label}${eng.contact_number ? ` | ${eng.contact_number}` : ''}`}
-          >
-            {brandCfg.label}
-            <span className={`rounded-full px-1 ${statusCfg.color}`}>{statusCfg.label}</span>
-          </span>
-        );
-      })}
-    </div>
-  );
+const SYSTEM_TAGS = new Set(['xhs', 'opencli', 'google-sheet']);
+
+function formatKeywordTag(tag: string): string {
+  return tag.replace(/_/g, ' ');
 }
 
-function getSourceLabel(tags: readonly string[], engagements: readonly BrandEngagement[]): { readonly label: string; readonly color: string } {
-  if (tags.includes('google-sheet')) {
-    const pic = engagements.length > 0 ? engagements[0].pic : null;
-    const picName = pic ? pic.charAt(0).toUpperCase() + pic.slice(1) : 'Sheet';
-    return { label: picName, color: 'bg-green-900 text-green-300' };
-  }
-  if (tags.includes('opencli')) {
-    return { label: 'XHS Scraper', color: 'bg-cyan-900 text-cyan-300' };
-  }
-  return { label: 'Manual', color: 'bg-zinc-700 text-zinc-400' };
-}
-
-function SourceBadge({ tags, engagements }: { readonly tags: readonly string[]; readonly engagements: readonly BrandEngagement[] }) {
-  const source = getSourceLabel(tags, engagements);
-  return (
-    <Badge className={source.color}>{source.label}</Badge>
-  );
+function getKeywordTags(tags: readonly string[]): readonly string[] {
+  return tags.filter((t) => !SYSTEM_TAGS.has(t));
 }
 
 function WhatsAppLink({ contactNumber }: { readonly contactNumber: string | null }) {
@@ -97,17 +66,58 @@ function WhatsAppLink({ contactNumber }: { readonly contactNumber: string | null
   );
 }
 
+function SourceBadge({ tags, engagements }: { readonly tags: readonly string[]; readonly engagements: readonly BrandEngagement[] }) {
+  if (tags.includes('google-sheet')) {
+    const pic = engagements.length > 0 ? engagements[0].pic : null;
+    const picName = pic ? pic.charAt(0).toUpperCase() + pic.slice(1) : 'Sheet';
+    return <Badge className="bg-green-900 text-green-300">{picName}</Badge>;
+  }
+  if (tags.includes('opencli')) {
+    return <Badge className="bg-cyan-900 text-cyan-300">Scraper</Badge>;
+  }
+  return <Badge className="bg-zinc-700 text-zinc-400">Manual</Badge>;
+}
+
+function PicBadge({ engagements }: { readonly engagements: readonly BrandEngagement[] }) {
+  const pics = new Set(
+    engagements
+      .map((e) => e.pic)
+      .filter((p): p is string => p !== null && p !== ''),
+  );
+  if (pics.size === 0) return <span className="text-zinc-600">--</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {Array.from(pics).map((p) => (
+        <Badge key={p} className="bg-violet-900 text-violet-300">
+          {p.charAt(0).toUpperCase() + p.slice(1)}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+export interface BrandEngagementMap {
+  readonly songhwa?: BrandEngagement;
+  readonly byondwalls?: BrandEngagement;
+}
+
 interface CreatorTableProps {
   readonly creators: readonly Creator[];
   readonly selectedIds: ReadonlySet<string>;
   readonly onToggleSelect: (id: string) => void;
   readonly onToggleSelectAll: () => void;
   readonly allSelected: boolean;
-  readonly onStatusChange?: (id: string, status: OutreachStatus) => Promise<void>;
+  readonly onBrandStatusChange: (
+    creatorId: string,
+    brand: Brand,
+    status: EngagementStatus,
+    engagementId: string | null,
+  ) => Promise<void>;
   readonly sortField: SortField;
   readonly sortOrder: SortOrder;
   readonly onSort: (field: SortField) => void;
-  readonly engagementsByCreator?: Map<string, readonly BrandEngagement[]>;
+  readonly engagementsByCreator: ReadonlyMap<string, BrandEngagementMap>;
+  readonly allEngagements: ReadonlyMap<string, readonly BrandEngagement[]>;
 }
 
 export function CreatorTable({
@@ -116,11 +126,12 @@ export function CreatorTable({
   onToggleSelect,
   onToggleSelectAll,
   allSelected,
-  onStatusChange,
+  onBrandStatusChange,
   sortField,
   sortOrder,
   onSort,
   engagementsByCreator,
+  allEngagements,
 }: CreatorTableProps) {
   return (
     <>
@@ -138,8 +149,6 @@ export function CreatorTable({
             <option value="follower_count">Followers</option>
             <option value="likes_count">Post Likes</option>
             <option value="profile_likes_saves">Profile L+S</option>
-            <option value="outreach_status">Status</option>
-            <option value="location">Location</option>
           </select>
           <button
             onClick={() => onSort(sortField)}
@@ -148,7 +157,7 @@ export function CreatorTable({
             {sortOrder === 'asc' ? '▲ Asc' : '▼ Desc'}
           </button>
         </div>
-        <CreatorCardList creators={creators} onStatusChange={onStatusChange} />
+        <CreatorCardList creators={creators} />
       </div>
 
       {/* Desktop: table layout */}
@@ -164,25 +173,22 @@ export function CreatorTable({
                   className="rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500"
                 />
               </th>
-              <SortHeader label="Creator" field="name" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
-              <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden sm:table-cell">Platform</th>
-              <SortHeader label="Followers" field="follower_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
-              <SortHeader label="Post Likes" field="likes_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden md:table-cell" />
-              <SortHeader label="Profile L+S" field="profile_likes_saves" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right hidden lg:table-cell" />
-              <SortHeader label="Location" field="location" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="hidden lg:table-cell" />
-              <SortHeader label="Status" field="outreach_status" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
-              <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Source</th>
-              <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Brands</th>
-              <th className="text-left py-3 px-2 font-medium text-zinc-400 hidden lg:table-cell">Tags</th>
+              <SortHeader label="Name" field="name" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} />
+              <SortHeader label="Followers" field="follower_count" currentSort={sortField} currentOrder={sortOrder} onSort={onSort} className="text-right" />
+              <th className="text-left py-3 px-2 font-medium text-orange-400">Songhwa</th>
+              <th className="text-left py-3 px-2 font-medium text-indigo-400">Byondwalls</th>
+              <th className="text-left py-3 px-2 font-medium text-zinc-400">PIC</th>
+              <th className="text-left py-3 px-2 font-medium text-zinc-400">Source</th>
+              <th className="text-left py-3 px-2 font-medium text-zinc-400">Keywords</th>
             </tr>
           </thead>
           <tbody>
             {creators.map((creator) => {
-              const ext = creator as Creator & { readonly likes_count?: number; readonly profile_likes_saves?: number };
-              const likesCount = ext.likes_count;
-              const profileLS = ext.profile_likes_saves;
-              const creatorEngagements = engagementsByCreator?.get(creator.id) ?? [];
+              const brandMap = engagementsByCreator.get(creator.id) ?? {};
+              const creatorEngagements = allEngagements.get(creator.id) ?? [];
               const latestEngagement = creatorEngagements.length > 0 ? creatorEngagements[0] : null;
+              const keywords = getKeywordTags(creator.tags);
+
               return (
                 <tr key={creator.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
                   <td className="py-3 px-2">
@@ -208,13 +214,12 @@ export function CreatorTable({
                         </div>
                         <div className="text-xs text-zinc-500">@{creator.username}</div>
                       </Link>
-                      {/* Contact: WhatsApp link */}
                       {latestEngagement?.contact_number && (
                         <div className="mt-0.5">
                           <WhatsAppLink contactNumber={latestEngagement.contact_number} />
                         </div>
                       )}
-                      {/* Hover tooltip with creator details */}
+                      {/* Hover tooltip */}
                       <div className="absolute left-0 top-full mt-1 z-50 hidden group-hover/tooltip:block w-80 p-3 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl text-sm">
                         <div className="font-semibold text-zinc-100 mb-2">{creator.name}</div>
                         {creator.outreach_notes && (
@@ -224,9 +229,6 @@ export function CreatorTable({
                           {creator.follower_count != null && (
                             <div><span className="text-zinc-500">Followers:</span> <span className="text-zinc-300">{formatNumber(creator.follower_count)}</span></div>
                           )}
-                          {likesCount != null && (
-                            <div><span className="text-zinc-500">Likes:</span> <span className="text-zinc-300">{formatNumber(likesCount)}</span></div>
-                          )}
                           {creator.location && (
                             <div><span className="text-zinc-500">Location:</span> <span className="text-zinc-300">{creator.location}</span></div>
                           )}
@@ -234,58 +236,51 @@ export function CreatorTable({
                             <div><span className="text-zinc-500">Type:</span> <span className="text-zinc-300">{creator.content_type}</span></div>
                           )}
                         </div>
-                        {creator.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {creator.tags.map((tag) => (
-                              <span key={tag} className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded text-xs">{tag}</span>
-                            ))}
-                          </div>
-                        )}
                         {creator.profile_url && (
                           <a href={creator.profile_url} target="_blank" rel="noopener noreferrer"
                             className="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1">
-                            View XHS Profile →
+                            View XHS Profile
                           </a>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-2 hidden sm:table-cell">
-                    <Badge className="bg-zinc-800 text-zinc-300">{getPlatformLabel(creator.platform)}</Badge>
-                  </td>
-                  <td className="py-3 px-2 text-right text-zinc-300 hidden md:table-cell">
+                  <td className="py-3 px-2 text-right text-zinc-300">
                     {formatNumber(creator.follower_count)}
                   </td>
-                  <td className="py-3 px-2 text-right text-zinc-300 hidden md:table-cell">
-                    {likesCount != null && likesCount > 0 ? formatNumber(likesCount) : '-'}
-                  </td>
-                  <td className="py-3 px-2 text-right text-zinc-300 hidden lg:table-cell">
-                    {profileLS != null && profileLS > 0 ? formatNumber(profileLS) : '-'}
-                  </td>
-                  <td className="py-3 px-2 text-zinc-400 hidden lg:table-cell">
-                    {creator.location ?? '-'}
-                  </td>
                   <td className="py-3 px-2">
-                    <StatusSelect
+                    <BrandStatusSelect
                       creatorId={creator.id}
-                      currentStatus={creator.outreach_status}
-                      onStatusChange={onStatusChange}
-                      compact
+                      brand="songhwa"
+                      engagement={brandMap.songhwa}
+                      onStatusChange={onBrandStatusChange}
                     />
                   </td>
-                  <td className="py-3 px-2 hidden lg:table-cell">
+                  <td className="py-3 px-2">
+                    <BrandStatusSelect
+                      creatorId={creator.id}
+                      brand="byondwalls"
+                      engagement={brandMap.byondwalls}
+                      onStatusChange={onBrandStatusChange}
+                    />
+                  </td>
+                  <td className="py-3 px-2">
+                    <PicBadge engagements={creatorEngagements} />
+                  </td>
+                  <td className="py-3 px-2">
                     <SourceBadge tags={creator.tags} engagements={creatorEngagements} />
                   </td>
-                  <td className="py-3 px-2 hidden lg:table-cell">
-                    <EngagementBadges engagements={creatorEngagements} />
-                  </td>
-                  <td className="py-3 px-2 hidden lg:table-cell">
+                  <td className="py-3 px-2">
                     <div className="flex flex-wrap gap-1">
-                      {creator.tags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} className="bg-zinc-800 text-zinc-400">{tag}</Badge>
+                      {keywords.slice(0, 3).map((tag) => (
+                        <Badge key={tag} className="bg-zinc-800 text-zinc-400 text-[10px]">
+                          {formatKeywordTag(tag)}
+                        </Badge>
                       ))}
-                      {creator.tags.length > 3 && (
-                        <Badge className="bg-zinc-800 text-zinc-500">+{creator.tags.length - 3}</Badge>
+                      {keywords.length > 3 && (
+                        <Badge className="bg-zinc-800 text-zinc-500 text-[10px]">
+                          +{keywords.length - 3}
+                        </Badge>
                       )}
                     </div>
                   </td>
