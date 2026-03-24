@@ -43,6 +43,7 @@ export default function CreatorsPage() {
   if (outreachStatus) queryParams.set('outreach_status', outreachStatus);
   if (hasPostedAboutUs) queryParams.set('has_posted_about_us', hasPostedAboutUs);
   if (debouncedLocation) queryParams.set('location', debouncedLocation);
+  if (source) queryParams.set('source', source);
   queryParams.set('sort_by', sortField);
   queryParams.set('sort_order', sortOrder);
 
@@ -262,20 +263,12 @@ export default function CreatorsPage() {
     if (brandFilteredCreatorIds) {
       items = items.filter((c) => brandFilteredCreatorIds.has(c.id));
     }
-    if (source) {
+    // Source filter is now server-side (via API query param)
+    // PIC sub-filter for liz/amber within google-sheet source
+    if (source === 'liz' || source === 'amber') {
       items = items.filter((c) => {
-        const tags = c.tags ?? [];
-        if (source === 'scraper') return tags.includes('opencli');
-        if (source === 'liz') {
-          const engs = allEngagementsByCreator.get(c.id) ?? [];
-          return tags.includes('google-sheet') && engs.some(e => e.pic === 'liz');
-        }
-        if (source === 'amber') {
-          const engs = allEngagementsByCreator.get(c.id) ?? [];
-          return tags.includes('google-sheet') && engs.some(e => e.pic === 'amber');
-        }
-        if (source === 'manual') return !tags.includes('opencli') && !tags.includes('google-sheet');
-        return true;
+        const engs = allEngagementsByCreator.get(c.id) ?? [];
+        return engs.some(e => e.pic === source);
       });
     }
     return items;

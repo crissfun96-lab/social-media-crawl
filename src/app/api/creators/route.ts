@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const params = parseSearchParams(request.url);
     const page = Math.max(1, parseInt(params.get('page') ?? '1', 10));
-    const perPage = Math.min(100, Math.max(1, parseInt(params.get('per_page') ?? String(DEFAULT_PAGE_SIZE), 10)));
+    const perPage = Math.min(2000, Math.max(1, parseInt(params.get('per_page') ?? String(DEFAULT_PAGE_SIZE), 10)));
     const offset = (page - 1) * perPage;
 
     let query: FirebaseFirestore.Query = db().collection('creators');
@@ -32,6 +32,16 @@ export async function GET(request: Request) {
     if (location) {
       const loc = location.toLowerCase();
       results = results.filter(r => r.location?.toLowerCase().includes(loc));
+    }
+
+    // Source filter: scraper (opencli tag), google-sheet, manual
+    const source = params.get('source');
+    if (source === 'scraper') {
+      results = results.filter(r => (r.tags ?? []).includes('opencli'));
+    } else if (source === 'google-sheet' || source === 'liz' || source === 'amber') {
+      results = results.filter(r => (r.tags ?? []).includes('google-sheet'));
+    } else if (source === 'manual') {
+      results = results.filter(r => !(r.tags ?? []).includes('opencli') && !(r.tags ?? []).includes('google-sheet'));
     }
 
     const search = params.get('search');
